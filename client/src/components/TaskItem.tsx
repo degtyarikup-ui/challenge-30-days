@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { HabitWithStatus, UserId } from '../types';
 import { Footprints, Moon, Dumbbell, BookOpen, CheckSquare2, Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
+import { playToggleOnSound, playToggleOffSound } from '../utils/audio';
 
 interface TaskItemProps {
   habit: HabitWithStatus;
@@ -71,7 +72,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     if (disabled || isPending) return;
 
     setIsPending(true);
-    triggerHaptic(isMyDone ? 'light' : 'success');
+
+    // Audio & Haptic
+    if (!isMyDone) {
+      playToggleOnSound();
+      triggerHaptic('success');
+    } else {
+      playToggleOffSound();
+      triggerHaptic('light');
+    }
+
     onToggle(habit.id, isMyDone);
 
     setTimeout(() => {

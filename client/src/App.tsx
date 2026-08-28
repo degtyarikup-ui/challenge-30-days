@@ -12,9 +12,12 @@ import {
   subscribeToEvents,
 } from './api';
 import { initTelegramApp, getTelegramUser, triggerHaptic } from './utils/telegram';
+import { triggerCelebrationConfetti } from './utils/confetti';
+import { playAllDoneSound, playWarningSound } from './utils/audio';
 import { Header } from './components/Header';
 import { StreakTracker } from './components/StreakTracker';
 import { TaskList } from './components/TaskList';
+import { CelebrationBanner } from './components/CelebrationBanner';
 import { RulesModal } from './components/RulesModal';
 import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
@@ -157,6 +160,25 @@ export const App: React.FC = () => {
     const targetDate = selectedDate || state.date;
     const newStatus = !currentStatus;
 
+    // Check if this action will complete all user habits
+    const userKey = currentUserId === 'sereja' ? 'status_sereja' : 'status_lera';
+    const relevantHabits = state.habits.filter(
+      (h) => !h.assigned_to || h.assigned_to === 'both' || h.assigned_to === currentUserId
+    );
+
+    const willBeAllDone =
+      newStatus &&
+      relevantHabits.length > 0 &&
+      relevantHabits.every((h) => (h.id === habitId ? true : h[userKey].completed));
+
+    if (willBeAllDone) {
+      setTimeout(() => {
+        playAllDoneSound();
+        triggerCelebrationConfetti();
+        triggerHaptic('success');
+      }, 100);
+    }
+
     // Instant local state update
     setState((prev) => {
       if (!prev) return prev;
@@ -178,10 +200,7 @@ export const App: React.FC = () => {
     });
 
     try {
-      const res = await toggleHabitApi(habitId, currentUserId, targetDate, newStatus);
-      if (res.allDone) {
-        triggerHaptic('success');
-      }
+      await toggleHabitApi(habitId, currentUserId, targetDate, newStatus);
     } catch (err) {
       console.error('Failed to toggle habit:', err);
       loadData(targetDate);
@@ -271,6 +290,13 @@ export const App: React.FC = () => {
   const isPastDate = selectedDate !== state.actualDate;
   const isGracePeriodActiveForPast = isPastDate && selectedDate === state.yesterdayDate && state.isGracePeriod;
 
+  // Check if all habits for current user are done
+  const myHabits = state.habits.filter(
+    (h) => !h.assigned_to || h.assigned_to === 'both' || h.assigned_to === currentUserId
+  );
+  const userKey = currentUserId === 'sereja' ? 'status_sereja' : 'status_lera';
+  const isAllMyDone = myHabits.length > 0 && myHabits.every((h) => h[userKey].completed);
+
   return (
     <div className="min-h-screen bg-background text-text-black pb-8 flex flex-col selection:bg-lime selection:text-black">
       {/* Header */}
@@ -286,11 +312,14 @@ export const App: React.FC = () => {
           setIsManageModalOpen(true);
         }}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
-        onOpenRulesModal={() => setIsRulesModalOpen(true)}
+        onOpenRulesModal={() => {
+          playWarningSound();
+          setIsRulesModalOpen(true);
+        }}
       />
 
       {/* Main Content */}
-      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-4 flex-1">
+      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-3.5 flex-1">
         {/* Past Date indicator */}
         {isPastDate && !isGracePeriodActiveForPast && (
           <div className="bg-white rounded-2xl p-3 text-xs font-bold text-text-black flex items-center justify-between">
@@ -312,7 +341,10 @@ export const App: React.FC = () => {
           daysUntilStart={state.daysUntilStart}
         />
 
-        {/* 2. Compact Habits List with Long-press */}
+        {/* 2. Celebration Banner when all done */}
+        <CelebrationBanner show={isAllMyDone} />
+
+        {/* 3. Compact Habits List with Long-press */}
         <TaskList
           habits={state.habits}
           currentUserId={currentUserId}
