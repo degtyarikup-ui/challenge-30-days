@@ -9,6 +9,7 @@ import { renderHabitIcon } from '../utils/icons';
 interface TaskItemProps {
   habit: HabitWithStatus;
   currentUserId: UserId;
+  partnerAvatarUrl?: string | null;
   onToggle: (habitId: number, currentStatus: boolean) => void;
   onContextMenu: (habit: HabitWithStatus) => void;
   disabled?: boolean;
@@ -17,6 +18,7 @@ interface TaskItemProps {
 export const TaskItem: React.FC<TaskItemProps> = ({
   habit,
   currentUserId,
+  partnerAvatarUrl,
   onToggle,
   onContextMenu,
   disabled = false,
@@ -32,6 +34,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const isMyDone = currentUserId === 'sereja' ? isSerejaDone : isLeraDone;
   const isPartnerDone = currentUserId === 'sereja' ? isLeraDone : isSerejaDone;
   const partnerName = currentUserId === 'sereja' ? 'Лера' : 'Серёжа';
+  const partnerInitial = currentUserId === 'sereja' ? 'Л' : 'С';
 
   const isBoth = !habit.assigned_to || habit.assigned_to === 'both';
   const myTarget = currentUserId === 'sereja' ? habit.target_sereja : habit.target_lera;
@@ -154,17 +157,30 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
         {/* Right Side: Partner Done Badge + Custom Switch */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
-          {/* Partner Done Badge (ONLY if assigned to both and partner completed) */}
+          {/* Partner Done Badge (with Avatar & Checkmark) */}
           {isBoth && isPartnerDone && (
             <div
-              className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 transition-all duration-200 animate-in fade-in ${
+              className={`pl-1 pr-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
                 isMyDone
-                  ? 'bg-white text-black'
-                  : 'bg-card-dark text-lime'
+                  ? 'bg-white text-black shadow-xs'
+                  : 'bg-card-dark text-lime shadow-xs'
               }`}
             >
-              <Check className="w-3 h-3 stroke-[3]" />
-              <span>{partnerName} выполнил(а)</span>
+              {partnerAvatarUrl ? (
+                <img
+                  src={partnerAvatarUrl}
+                  alt={partnerName}
+                  className="w-4 h-4 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-lime text-black flex items-center justify-center text-[9px] font-black">
+                  {partnerInitial}
+                </div>
+              )}
+              <div className="flex items-center gap-0.5">
+                <span>{partnerName}</span>
+                <Check className="w-3 h-3 stroke-[3]" />
+              </div>
             </div>
           )}
 

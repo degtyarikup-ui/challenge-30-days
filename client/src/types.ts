@@ -9,6 +9,7 @@ export interface User {
   max_streak: number;
   challenge_start_date: string;
   avatar_color: string;
+  avatar_url?: string | null;
 }
 
 export type HabitCategory = 'active' | 'passive';

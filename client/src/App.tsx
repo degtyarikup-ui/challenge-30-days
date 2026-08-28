@@ -82,6 +82,9 @@ export const App: React.FC = () => {
           if (authRes.userId) {
             setCurrentUserId(authRes.userId);
             localStorage.setItem('challenge_user_id', authRes.userId);
+            if (tgUser.photo_url) {
+              localStorage.setItem(`avatar_${authRes.userId}`, tgUser.photo_url);
+            }
             setShowUserSetup(false);
           } else if (!currentUserId) {
             setShowUserSetup(true);
@@ -141,6 +144,9 @@ export const App: React.FC = () => {
 
     const tgUser = getTelegramUser();
     if (tgUser) {
+      if (tgUser.photo_url) {
+        localStorage.setItem(`avatar_${userId}`, tgUser.photo_url);
+      }
       await authenticateUserApi({
         telegramId: tgUser.id,
         username: tgUser.username,
@@ -298,11 +304,18 @@ export const App: React.FC = () => {
   const userKey = currentUserId === 'sereja' ? 'status_sereja' : 'status_lera';
   const isAllMyDone = myHabits.length > 0 && myHabits.every((h) => h[userKey].completed);
 
+  // Avatar URLs
+  const tgUser = getTelegramUser();
+  const partnerId: UserId = currentUserId === 'sereja' ? 'lera' : 'sereja';
+  const userAvatarUrl = tgUser?.photo_url || localStorage.getItem(`avatar_${currentUserId}`) || state.users[currentUserId]?.avatar_url || null;
+  const partnerAvatarUrl = localStorage.getItem(`avatar_${partnerId}`) || state.users[partnerId]?.avatar_url || null;
+
   return (
     <div className="min-h-screen bg-background text-text-black pb-8 flex flex-col selection:bg-lime selection:text-black">
       {/* Header */}
       <Header
         currentUserId={currentUserId}
+        userAvatarUrl={userAvatarUrl}
         selectedDate={selectedDate}
         actualDate={state.actualDate}
         yesterdayDate={state.yesterdayDate}
@@ -394,10 +407,11 @@ export const App: React.FC = () => {
         {/* 2. Non-intrusive Celebration Banner when all done */}
         <CelebrationBanner show={isAllMyDone} />
 
-        {/* 3. Compact Habits List with Long-press */}
+        {/* 3. Compact Habits List with Long-press & Partner Status */}
         <TaskList
           habits={state.habits}
           currentUserId={currentUserId}
+          partnerAvatarUrl={partnerAvatarUrl}
           onToggle={handleToggleHabit}
           onContextMenu={handleOpenContextMenu}
           onOpenManageModal={() => {

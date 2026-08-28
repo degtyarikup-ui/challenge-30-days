@@ -5,6 +5,7 @@ import { triggerHaptic } from '../utils/telegram';
 
 interface HeaderProps {
   currentUserId: UserId;
+  userAvatarUrl?: string | null;
   selectedDate: string;
   actualDate: string;
   yesterdayDate: string;
@@ -17,6 +18,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   currentUserId,
+  userAvatarUrl,
   selectedDate,
   actualDate,
   yesterdayDate,
@@ -27,16 +29,28 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRulesModal,
 }) => {
   const isViewingYesterday = selectedDate === yesterdayDate;
+  const userName = currentUserId === 'sereja' ? 'Серёжа' : 'Лера';
+  const initial = currentUserId === 'sereja' ? 'С' : 'Л';
 
   return (
     <header className="px-4 pt-3 pb-1 sm:px-6">
       <div className="max-w-xl mx-auto flex items-center justify-between">
-        {/* User Identity */}
+        {/* User Identity with Avatar */}
         <div className="flex items-center gap-2">
-          <div className="bg-card-dark text-white px-3 py-1.5 rounded-full flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-lime" />
+          <div className="bg-card-dark text-white pl-1.5 pr-3 py-1 rounded-full flex items-center gap-2">
+            {userAvatarUrl ? (
+              <img
+                src={userAvatarUrl}
+                alt={userName}
+                className="w-5 h-5 rounded-full object-cover border border-white/20"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-lime text-black flex items-center justify-center text-[10px] font-black">
+                {initial}
+              </div>
+            )}
             <span className="text-xs font-bold tracking-wide">
-              {currentUserId === 'sereja' ? 'Серёжа' : 'Лера'}
+              {userName}
             </span>
           </div>
 

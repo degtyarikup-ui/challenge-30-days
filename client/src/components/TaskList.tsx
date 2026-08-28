@@ -7,6 +7,7 @@ import { triggerHaptic } from '../utils/telegram';
 interface TaskListProps {
   habits: HabitWithStatus[];
   currentUserId: UserId;
+  partnerAvatarUrl?: string | null;
   onToggle: (habitId: number, currentStatus: boolean) => void;
   onContextMenu: (habit: HabitWithStatus) => void;
   onOpenManageModal: () => void;
@@ -16,6 +17,7 @@ interface TaskListProps {
 export const TaskList: React.FC<TaskListProps> = ({
   habits,
   currentUserId,
+  partnerAvatarUrl,
   onToggle,
   onContextMenu,
   onOpenManageModal,
@@ -65,6 +67,7 @@ export const TaskList: React.FC<TaskListProps> = ({
               key={habit.id}
               habit={habit}
               currentUserId={currentUserId}
+              partnerAvatarUrl={partnerAvatarUrl}
               onToggle={onToggle}
               onContextMenu={onContextMenu}
               disabled={disabled}

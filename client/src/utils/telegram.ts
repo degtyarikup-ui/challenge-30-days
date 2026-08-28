@@ -12,6 +12,7 @@ declare global {
             first_name: string;
             last_name?: string;
             username?: string;
+            photo_url?: string;
             language_code?: string;
           };
         };
@@ -33,8 +34,8 @@ export function initTelegramApp() {
     tg.ready();
     tg.expand();
     try {
-      tg.setHeaderColor('#ffffff');
-      tg.setBackgroundColor('#ffffff');
+      tg.setHeaderColor('#F5F6F9');
+      tg.setBackgroundColor('#F5F6F9');
     } catch (e) {
       // Ignored if older client
     }
