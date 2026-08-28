@@ -1,6 +1,7 @@
 import { AppStateResponse, Habit, HistoryDay, UserId, HabitWithStatus, Violation, User } from './types';
 
 const API_BASE = '/api';
+const CLOUD_SYNC_URL = 'https://kvdb.io/A8oRkW68bL5g2917hP9s1w/challenge_state_30d_v1';
 
 // Initial Mock / Local Storage Data for GitHub Pages
 const DEFAULT_HABITS: Habit[] = [
@@ -18,6 +19,73 @@ const DEFAULT_HABITS: Habit[] = [
   { id: 17, title: 'Без алкоголя', category: 'passive', target_type: 'checkbox', target_sereja: '', target_lera: '', unit: '', is_active: 1, order_index: 17, created_at: '' },
   { id: 18, title: 'Без сигарет', category: 'passive', target_type: 'checkbox', target_sereja: '', target_lera: '', unit: '', is_active: 1, order_index: 18, created_at: '' },
 ];
+
+interface CloudPayload {
+  logs: Record<string, boolean>;
+  habits?: Habit[];
+  violations?: Violation[];
+  startDate?: string;
+  users?: Record<UserId, User>;
+  lastUpdated: number;
+}
+
+// Push local data to Cloud
+async function pushToCloud() {
+  try {
+    const logs = JSON.parse(localStorage.getItem('challenge_logs') || '{}');
+    const habits = JSON.parse(localStorage.getItem('challenge_habits') || 'null');
+    const violations = JSON.parse(localStorage.getItem('challenge_violations') || 'null');
+    const startDate = localStorage.getItem('challenge_start_date') || '2026-08-31';
+    const users = JSON.parse(localStorage.getItem('challenge_users') || 'null');
+
+    const payload: CloudPayload = {
+      logs,
+      habits: habits || undefined,
+      violations: violations || undefined,
+      startDate,
+      users: users || undefined,
+      lastUpdated: Date.now(),
+    };
+
+    await fetch(CLOUD_SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    // Ignore offline errors
+  }
+}
+
+// Pull data from Cloud and merge
+async function pullFromCloud() {
+  try {
+    const res = await fetch(CLOUD_SYNC_URL);
+    if (res.ok) {
+      const data: CloudPayload = await res.json();
+      if (data && data.logs) {
+        const localLogs = JSON.parse(localStorage.getItem('challenge_logs') || '{}');
+        const mergedLogs = { ...localLogs, ...data.logs };
+        localStorage.setItem('challenge_logs', JSON.stringify(mergedLogs));
+
+        if (data.habits && data.habits.length > 0) {
+          localStorage.setItem('challenge_habits', JSON.stringify(data.habits));
+        }
+        if (data.violations) {
+          localStorage.setItem('challenge_violations', JSON.stringify(data.violations));
+        }
+        if (data.startDate) {
+          localStorage.setItem('challenge_start_date', data.startDate);
+        }
+        if (data.users) {
+          localStorage.setItem('challenge_users', JSON.stringify(data.users));
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore offline errors
+  }
+}
 
 function getLocalState(targetDate?: string): AppStateResponse {
   const now = new Date();
@@ -55,11 +123,15 @@ function getLocalState(targetDate?: string): AppStateResponse {
     if (h.category === 'active') {
       activeHabits.push({
         ...h,
+        assigned_to: h.assigned_to || 'both',
         status_sereja: { completed: !!logs[`${h.id}_sereja_${date}`], value: null },
         status_lera: { completed: !!logs[`${h.id}_lera_${date}`], value: null },
       });
     } else {
-      passiveRules.push(h);
+      passiveRules.push({
+        ...h,
+        assigned_to: h.assigned_to || 'both',
+      });
     }
   }
 
@@ -82,8 +154,8 @@ function getLocalState(targetDate?: string): AppStateResponse {
     recentViolations: violations.slice(0, 10),
     stats: {
       totalDays: 30,
-      serejaCompletedCountToday: activeHabits.filter(h => h.status_sereja.completed).length,
-      leraCompletedCountToday: activeHabits.filter(h => h.status_lera.completed).length,
+      serejaCompletedCountToday: activeHabits.filter(h => h.assigned_to !== 'lera' && h.status_sereja.completed).length,
+      leraCompletedCountToday: activeHabits.filter(h => h.assigned_to !== 'sereja' && h.status_lera.completed).length,
       totalActiveHabits: activeHabits.length,
     }
   };
@@ -124,7 +196,8 @@ export async function fetchAppState(date?: string): Promise<AppStateResponse> {
     const res = await fetch(url);
     if (res.ok) return await res.json();
   } catch (e) {
-    // Fallback on GitHub Pages
+    // Pull latest updates from Cloud on GitHub Pages
+    await pullFromCloud();
   }
   return getLocalState(date);
 }
@@ -141,6 +214,7 @@ export async function updateStartDateApi(startDate: string): Promise<{ success: 
     // Fallback on GitHub Pages
   }
   localStorage.setItem('challenge_start_date', startDate);
+  pushToCloud();
   return { success: true, startDate };
 }
 
@@ -166,6 +240,7 @@ export async function toggleHabitApi(
   const logs = JSON.parse(logsStr);
   logs[`${habitId}_${userId}_${date}`] = completed;
   localStorage.setItem('challenge_logs', JSON.stringify(logs));
+  pushToCloud();
   return { success: true, allDone: false };
 }
 
@@ -197,6 +272,7 @@ export async function recordViolationApi(
     created_at: new Date().toISOString(),
   });
   localStorage.setItem('challenge_violations', JSON.stringify(violations));
+  pushToCloud();
   return { success: true, message: 'Срыв зафиксирован' };
 }
 
@@ -223,11 +299,14 @@ export async function createHabitApi(habit: Partial<Habit>): Promise<{ success: 
     target_sereja: habit.target_sereja || '',
     target_lera: habit.target_lera || '',
     unit: habit.unit || '',
+    icon: habit.icon || 'footprints',
+    assigned_to: habit.assigned_to || 'both',
     is_active: 1,
     order_index: habits.length + 1,
     created_at: new Date().toISOString(),
   });
   localStorage.setItem('challenge_habits', JSON.stringify(habits));
+  pushToCloud();
   return { success: true, id: newId };
 }
 
@@ -249,6 +328,7 @@ export async function updateHabitApi(id: number, habit: Partial<Habit>): Promise
   if (idx !== -1) {
     habits[idx] = { ...habits[idx], ...habit };
     localStorage.setItem('challenge_habits', JSON.stringify(habits));
+    pushToCloud();
   }
   return { success: true };
 }
@@ -267,6 +347,7 @@ export async function deleteHabitApi(id: number): Promise<{ success: boolean }> 
   const habits: Habit[] = habitsStr ? JSON.parse(habitsStr) : [...DEFAULT_HABITS];
   const filtered = habits.filter(h => h.id !== id);
   localStorage.setItem('challenge_habits', JSON.stringify(filtered));
+  pushToCloud();
   return { success: true };
 }
 
@@ -325,6 +406,14 @@ export function subscribeToEvents(onEvent: (event: any) => void): () => void {
       eventSource.close();
     };
   } catch (e) {
-    return () => {};
+    // Background polling interval for GitHub Pages
+    const interval = setInterval(async () => {
+      await pullFromCloud();
+      onEvent({ type: 'cloud_sync' });
+    }, 4000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }
 }
