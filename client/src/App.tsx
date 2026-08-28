@@ -7,7 +7,7 @@ import {
   createHabitApi,
   updateHabitApi,
   deleteHabitApi,
-  linkTelegramIdApi,
+  authenticateUserApi,
   subscribeToEvents,
 } from './api';
 import { initTelegramApp, getTelegramUser, triggerHaptic } from './utils/telegram';
@@ -18,14 +18,15 @@ import { PassiveRulesCard } from './components/PassiveRulesCard';
 import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, User } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [state, setState] = useState<AppStateResponse | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<UserId>(() => {
+  const [currentUserId, setCurrentUserId] = useState<UserId | null>(() => {
     const saved = localStorage.getItem('challenge_user_id');
-    return (saved as UserId) || 'sereja';
+    return (saved as UserId) || null;
   });
+  const [showUserSetup, setShowUserSetup] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +35,7 @@ export const App: React.FC = () => {
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
-  // Load Data
+  // Load App State
   const loadData = useCallback(async (date?: string) => {
     try {
       const data = await fetchAppState(date);
@@ -49,15 +50,40 @@ export const App: React.FC = () => {
     }
   }, []);
 
+  // Initialize Auth & Data
   useEffect(() => {
     initTelegramApp();
     const tgUser = getTelegramUser();
-    if (tgUser) {
-      const savedUser = (localStorage.getItem('challenge_user_id') as UserId) || 'sereja';
-      linkTelegramIdApi(savedUser, tgUser.id.toString());
-    }
 
-    loadData();
+    const initAuth = async () => {
+      if (tgUser) {
+        try {
+          const authRes = await authenticateUserApi({
+            telegramId: tgUser.id,
+            username: tgUser.username,
+            firstName: tgUser.first_name,
+            manualUserId: currentUserId || undefined,
+          });
+
+          if (authRes.userId) {
+            setCurrentUserId(authRes.userId);
+            localStorage.setItem('challenge_user_id', authRes.userId);
+            setShowUserSetup(false);
+          } else if (!currentUserId) {
+            setShowUserSetup(true);
+          }
+        } catch (e) {
+          console.warn('Auth check failed:', e);
+          if (!currentUserId) setShowUserSetup(true);
+        }
+      } else if (!currentUserId) {
+        setShowUserSetup(true);
+      }
+
+      await loadData();
+    };
+
+    initAuth();
 
     // SSE Realtime Subscription
     const unsubscribe = subscribeToEvents(() => {
@@ -67,15 +93,21 @@ export const App: React.FC = () => {
     return () => {
       unsubscribe();
     };
-  }, [loadData, selectedDate]);
+  }, [loadData, selectedDate, currentUserId]);
 
-  const handleSelectUser = (userId: UserId) => {
+  const handleSelectInitialUser = async (userId: UserId) => {
     setCurrentUserId(userId);
     localStorage.setItem('challenge_user_id', userId);
+    setShowUserSetup(false);
 
     const tgUser = getTelegramUser();
     if (tgUser) {
-      linkTelegramIdApi(userId, tgUser.id.toString());
+      await authenticateUserApi({
+        telegramId: tgUser.id,
+        username: tgUser.username,
+        firstName: tgUser.first_name,
+        manualUserId: userId,
+      });
     }
   };
 
@@ -84,8 +116,8 @@ export const App: React.FC = () => {
     loadData(date);
   };
 
-  const handleToggleHabit = async (habitId: number, userId: UserId, currentStatus: boolean) => {
-    if (!state) return;
+  const handleToggleHabit = async (habitId: number, currentStatus: boolean) => {
+    if (!state || !currentUserId) return;
     const targetDate = selectedDate || state.date;
     const newStatus = !currentStatus;
 
@@ -98,7 +130,7 @@ export const App: React.FC = () => {
           if (h.id === habitId) {
             return {
               ...h,
-              [userId === 'sereja' ? 'status_sereja' : 'status_lera']: {
+              [currentUserId === 'sereja' ? 'status_sereja' : 'status_lera']: {
                 completed: newStatus,
                 value: null,
               },
@@ -110,7 +142,7 @@ export const App: React.FC = () => {
     });
 
     try {
-      const res = await toggleHabitApi(habitId, userId, targetDate, newStatus);
+      const res = await toggleHabitApi(habitId, currentUserId, targetDate, newStatus);
       if (res.allDone) {
         triggerHaptic('success');
       }
@@ -121,7 +153,7 @@ export const App: React.FC = () => {
   };
 
   const handleConfirmViolation = async (ruleTitle: string, note: string) => {
-    if (!state) return;
+    if (!state || !currentUserId) return;
     const targetDate = selectedDate || state.date;
     await recordViolationApi(currentUserId, targetDate, ruleTitle, note);
     await loadData(targetDate);
@@ -142,10 +174,44 @@ export const App: React.FC = () => {
     await loadData(selectedDate);
   };
 
-  if (loading || !state) {
+  // 1-Time User Selection Dialog (only shown if not identified)
+  if (showUserSetup) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-surface border border-border p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-sm text-center">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-text-primary">Кто вы?</h2>
+            <p className="text-xs text-text-secondary">
+              Выберите свой профиль для этого устройства.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <button
+              onClick={() => handleSelectInitialUser('sereja')}
+              className="p-3.5 bg-white hover:bg-sereja-light border border-border hover:border-sereja-border rounded-xl text-xs font-medium text-sereja-text flex flex-col items-center gap-1.5 transition active:scale-98"
+            >
+              <User className="w-5 h-5 text-sereja" />
+              <span>Серёжа</span>
+            </button>
+
+            <button
+              onClick={() => handleSelectInitialUser('lera')}
+              className="p-3.5 bg-white hover:bg-lera-light border border-border hover:border-lera-border rounded-xl text-xs font-medium text-lera-text flex flex-col items-center gap-1.5 transition active:scale-98"
+            >
+              <User className="w-5 h-5 text-lera" />
+              <span>Лера</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !state || !currentUserId) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-2 text-text-secondary">
-        <RefreshCw className="w-5 h-5 animate-spin text-text-muted" />
+        <RefreshCw className="w-4 h-4 animate-spin text-text-muted" />
         <span className="text-xs">Загрузка...</span>
       </div>
     );
@@ -155,11 +221,10 @@ export const App: React.FC = () => {
   const isGracePeriodActiveForPast = isPastDate && selectedDate === state.yesterdayDate && state.isGracePeriod;
 
   return (
-    <div className="min-h-screen bg-background text-text-primary pb-16 flex flex-col">
+    <div className="min-h-screen bg-background text-text-primary pb-12 flex flex-col">
       {/* Header */}
       <Header
         currentUserId={currentUserId}
-        onSelectUser={handleSelectUser}
         selectedDate={selectedDate}
         actualDate={state.actualDate}
         yesterdayDate={state.yesterdayDate}

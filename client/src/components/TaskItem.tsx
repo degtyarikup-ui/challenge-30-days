@@ -6,7 +6,7 @@ import { triggerHaptic } from '../utils/telegram';
 interface TaskItemProps {
   habit: HabitWithStatus;
   currentUserId: UserId;
-  onToggle: (habitId: number, userId: UserId, currentStatus: boolean) => void;
+  onToggle: (habitId: number, currentStatus: boolean) => void;
   disabled?: boolean;
 }
 
@@ -29,10 +29,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const isSerejaDone = habit.status_sereja.completed;
   const isLeraDone = habit.status_lera.completed;
 
-  const handleUserClick = (userId: UserId, currentStatus: boolean) => {
+  const isMyDone = currentUserId === 'sereja' ? isSerejaDone : isLeraDone;
+
+  const handleMyClick = () => {
     if (disabled) return;
-    triggerHaptic(currentStatus ? 'light' : 'success');
-    onToggle(habit.id, userId, currentStatus);
+    triggerHaptic(isMyDone ? 'light' : 'success');
+    onToggle(habit.id, isMyDone);
   };
 
   return (
@@ -69,49 +71,79 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </div>
       </div>
 
-      {/* Right: Dual Checkbox Buttons */}
+      {/* Right: Personal Interactive Checkbox + Partner Status Indicator */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Sereja Checkbox */}
-        <button
-          onClick={() => handleUserClick('sereja', isSerejaDone)}
-          disabled={disabled}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${
-            isSerejaDone
-              ? 'bg-sereja text-white border-sereja'
-              : currentUserId === 'sereja'
-              ? 'bg-white hover:bg-sereja-light text-text-secondary border-border hover:border-sereja-border'
-              : 'bg-surface-subtle text-text-muted border-border'
-          } ${currentUserId !== 'sereja' ? 'cursor-default' : 'cursor-pointer'}`}
-          title={currentUserId === 'sereja' ? 'Отметить для Серёжи' : 'Статус Серёжи'}
-        >
-          {isSerejaDone ? (
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-          ) : (
-            <Circle className="w-3.5 h-3.5 text-text-muted" />
-          )}
-          <span className="text-[11px]">Серёжа</span>
-        </button>
+        {/* Sereja */}
+        {currentUserId === 'sereja' ? (
+          <button
+            onClick={handleMyClick}
+            disabled={disabled}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer active:scale-95 ${
+              isSerejaDone
+                ? 'bg-sereja text-white border-sereja'
+                : 'bg-white hover:bg-sereja-light text-text-secondary border-border hover:border-sereja-border'
+            }`}
+          >
+            {isSerejaDone ? (
+              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+            ) : (
+              <Circle className="w-3.5 h-3.5 text-text-muted" />
+            )}
+            <span className="text-[11px]">Серёжа</span>
+          </button>
+        ) : (
+          <div
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-default select-none ${
+              isSerejaDone
+                ? 'bg-sereja-light text-sereja-text border-sereja-border'
+                : 'bg-surface-subtle text-text-muted border-border'
+            }`}
+            title="Статус Серёжи (только для просмотра)"
+          >
+            {isSerejaDone ? (
+              <Check className="w-3.5 h-3.5 text-sereja stroke-[2.5]" />
+            ) : (
+              <Circle className="w-3.5 h-3.5 text-text-muted" />
+            )}
+            <span className="text-[11px]">Серёжа</span>
+          </div>
+        )}
 
-        {/* Lera Checkbox */}
-        <button
-          onClick={() => handleUserClick('lera', isLeraDone)}
-          disabled={disabled}
-          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${
-            isLeraDone
-              ? 'bg-lera text-white border-lera'
-              : currentUserId === 'lera'
-              ? 'bg-white hover:bg-lera-light text-text-secondary border-border hover:border-lera-border'
-              : 'bg-surface-subtle text-text-muted border-border'
-          } ${currentUserId !== 'lera' ? 'cursor-default' : 'cursor-pointer'}`}
-          title={currentUserId === 'lera' ? 'Отметить для Леры' : 'Статус Леры'}
-        >
-          {isLeraDone ? (
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-          ) : (
-            <Circle className="w-3.5 h-3.5 text-text-muted" />
-          )}
-          <span className="text-[11px]">Лера</span>
-        </button>
+        {/* Lera */}
+        {currentUserId === 'lera' ? (
+          <button
+            onClick={handleMyClick}
+            disabled={disabled}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer active:scale-95 ${
+              isLeraDone
+                ? 'bg-lera text-white border-lera'
+                : 'bg-white hover:bg-lera-light text-text-secondary border-border hover:border-lera-border'
+            }`}
+          >
+            {isLeraDone ? (
+              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+            ) : (
+              <Circle className="w-3.5 h-3.5 text-text-muted" />
+            )}
+            <span className="text-[11px]">Лера</span>
+          </button>
+        ) : (
+          <div
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-default select-none ${
+              isLeraDone
+                ? 'bg-lera-light text-lera-text border-lera-border'
+                : 'bg-surface-subtle text-text-muted border-border'
+            }`}
+            title="Статус Леры (только для просмотра)"
+          >
+            {isLeraDone ? (
+              <Check className="w-3.5 h-3.5 text-lera stroke-[2.5]" />
+            ) : (
+              <Circle className="w-3.5 h-3.5 text-text-muted" />
+            )}
+            <span className="text-[11px]">Лера</span>
+          </div>
+        )}
       </div>
     </div>
   );

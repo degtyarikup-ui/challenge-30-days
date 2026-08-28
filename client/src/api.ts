@@ -2,6 +2,23 @@ import { AppStateResponse, Habit, HistoryDay, UserId } from './types';
 
 const API_BASE = '/api';
 
+export async function authenticateUserApi(params: {
+  telegramId?: string | number;
+  username?: string;
+  firstName?: string;
+  manualUserId?: UserId;
+}): Promise<{ userId: UserId | null; requiresSelection?: boolean }> {
+  const res = await fetch(`${API_BASE}/auth`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) {
+    throw new Error('Auth failed');
+  }
+  return res.json();
+}
+
 export async function fetchAppState(date?: string): Promise<AppStateResponse> {
   const url = date ? `${API_BASE}/state?date=${date}` : `${API_BASE}/state`;
   const res = await fetch(url);

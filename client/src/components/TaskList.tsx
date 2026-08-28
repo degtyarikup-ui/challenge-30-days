@@ -7,7 +7,7 @@ import { triggerHaptic } from '../utils/telegram';
 interface TaskListProps {
   habits: HabitWithStatus[];
   currentUserId: UserId;
-  onToggle: (habitId: number, userId: UserId, currentStatus: boolean) => void;
+  onToggle: (habitId: number, currentStatus: boolean) => void;
   onOpenManageModal: () => void;
   disabled?: boolean;
 }
@@ -30,7 +30,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         <div className="flex items-center gap-1.5">
           <CheckSquare className="w-4 h-4 text-text-secondary" />
           <h2 className="text-sm font-semibold text-text-primary">
-            Ежедневные привычки
+            Привычки
           </h2>
         </div>
 

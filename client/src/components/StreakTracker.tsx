@@ -12,18 +12,15 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({ users, currentUser
   const lera = users.lera || { current_streak: 1, max_streak: 1, name: 'Лера' };
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-4 sm:p-5 space-y-4">
+    <div className="bg-surface rounded-xl border border-border p-4 sm:p-5 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Activity className="w-4 h-4 text-text-secondary" />
           <h2 className="text-sm font-semibold text-text-primary">
-            Прогресс (30 дней)
+            Прогресс
           </h2>
         </div>
-        <span className="text-[11px] text-text-secondary font-medium">
-          Сброс при нарушении
-        </span>
       </div>
 
       {/* Dual Cards */}

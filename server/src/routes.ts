@@ -11,13 +11,54 @@ import {
   resetStreak,
   updateStreak
 } from './db.js';
-import { getDateInfo, formatDate } from './dateUtils.js';
+import { getDateInfo } from './dateUtils.js';
 import { sseManager } from './sse.js';
 import { linkTelegramUser, notifyPartner } from './bot.js';
 import { evaluateYesterdayResults } from './cron.js';
 import { Habit, UserId } from './types.js';
 
 export const apiRouter = Router();
+
+// Auth / Auto-detect endpoint for Telegram
+apiRouter.post('/auth', (req: Request, res: Response) => {
+  const { telegramId, username, firstName, manualUserId } = req.body as {
+    telegramId?: string | number;
+    username?: string;
+    firstName?: string;
+    manualUserId?: UserId;
+  };
+
+  const tgIdStr = telegramId ? telegramId.toString() : null;
+
+  // 1. Check if Telegram ID already mapped in DB
+  if (tgIdStr) {
+    const matchedUser = db.prepare('SELECT id FROM users WHERE telegram_id = ?').get(tgIdStr) as { id: UserId } | undefined;
+    if (matchedUser) {
+      return res.json({ userId: matchedUser.id, autoDetected: true });
+    }
+  }
+
+  // 2. Auto-detect by firstName or username if matches
+  const nameStr = `${firstName || ''} ${username || ''}`.toLowerCase();
+  let detectedId: UserId | null = null;
+
+  if (nameStr.includes('сергей') || nameStr.includes('сережа') || nameStr.includes('degtyarik') || nameStr.includes('sergei') || nameStr.includes('sereja')) {
+    detectedId = 'sereja';
+  } else if (nameStr.includes('лера') || nameStr.includes('валерия') || nameStr.includes('lera') || nameStr.includes('valeria')) {
+    detectedId = 'lera';
+  } else if (manualUserId === 'sereja' || manualUserId === 'lera') {
+    detectedId = manualUserId;
+  }
+
+  if (detectedId && tgIdStr) {
+    linkTelegramUser(detectedId, tgIdStr);
+  }
+
+  res.json({
+    userId: detectedId,
+    requiresSelection: !detectedId,
+  });
+});
 
 // 1. Get Application Full State
 apiRouter.get('/state', (req: Request, res: Response) => {
@@ -53,7 +94,7 @@ apiRouter.get('/state', (req: Request, res: Response) => {
   });
 });
 
-// 2. Toggle / Check habit
+// 2. Toggle / Check habit (enforcing user restriction)
 apiRouter.post('/check', (req: Request, res: Response) => {
   const { habitId, userId, date, completed, value } = req.body as {
     habitId: number;
@@ -87,7 +128,7 @@ apiRouter.post('/check', (req: Request, res: Response) => {
   if (allDone && completed) {
     const user = getUser(userId);
     const userName = user?.name || (userId === 'sereja' ? 'Серёжа' : 'Лера');
-    notifyPartner(userId, `🎉 *${userName}* только что выполнил(а) ВСЕ цели на ${date}! Отличная работа! 🔥`);
+    notifyPartner(userId, `${userName} выполнил(а) все задачи на ${date}.`);
   }
 
   res.json({ success: true, allDone });
@@ -111,7 +152,7 @@ apiRouter.post('/violation', (req: Request, res: Response) => {
   const user = getUser(userId);
   const userName = user?.name || (userId === 'sereja' ? 'Серёжа' : 'Лера');
 
-  notifyPartner(userId, `⚠️ *${userName}* зафиксировал(а) срыв: «${ruleTitle}»${note ? ` (${note})` : ''}. Челлендж начинается заново с Дня 1. Не сдавайтесь! 💪`);
+  notifyPartner(userId, `${userName} зафиксировал(а) нарушение: «${ruleTitle}»${note ? ` (${note})` : ''}. Стрик сброшен на День 1.`);
 
   sseManager.broadcast('state_updated', {
     type: 'violation_recorded',

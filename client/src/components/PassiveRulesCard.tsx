@@ -5,38 +5,26 @@ import { triggerHaptic } from '../utils/telegram';
 
 interface PassiveRulesCardProps {
   rules: Habit[];
-  currentUserId: UserId;
+  currentUserId?: UserId;
   onOpenViolationModal: () => void;
   recentViolations: Violation[];
 }
 
 export const PassiveRulesCard: React.FC<PassiveRulesCardProps> = ({
   rules,
-  currentUserId,
   onOpenViolationModal,
   recentViolations,
 }) => {
-  const currentUserName = currentUserId === 'sereja' ? 'Серёжа' : 'Лера';
-
   return (
-    <div className="bg-surface rounded-xl border border-border p-4 sm:p-5 space-y-3.5">
+    <div className="bg-surface rounded-xl border border-border p-4 sm:p-5 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Shield className="w-4 h-4 text-text-secondary" />
-          <div>
-            <h2 className="text-sm font-semibold text-text-primary">
-              Правила питания и запреты
-            </h2>
-            <p className="text-[11px] text-text-secondary">
-              Соблюдаются постоянно
-            </p>
-          </div>
+          <h2 className="text-sm font-semibold text-text-primary">
+            Правила питания и запреты
+          </h2>
         </div>
-
-        <span className="text-[11px] text-text-muted">
-          24/7
-        </span>
       </div>
 
       {/* Rules Chips */}
@@ -53,9 +41,9 @@ export const PassiveRulesCard: React.FC<PassiveRulesCardProps> = ({
       </div>
 
       {/* Violation Action */}
-      <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-danger-light border border-danger-border rounded-lg p-3">
-        <div className="text-xs text-danger-text flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-danger flex-shrink-0" />
+      <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-danger-light border border-danger-border rounded-lg p-2.5 sm:p-3">
+        <div className="text-xs text-danger-text flex items-center gap-1.5">
+          <AlertCircle className="w-3.5 h-3.5 text-danger flex-shrink-0" />
           <span>Нарушение сбрасывает стрик на День 1</span>
         </div>
 
@@ -64,9 +52,9 @@ export const PassiveRulesCard: React.FC<PassiveRulesCardProps> = ({
             triggerHaptic('warning');
             onOpenViolationModal();
           }}
-          className="px-3 py-1.5 bg-white hover:bg-red-50 border border-danger-border text-danger text-xs font-medium rounded-lg transition active:scale-98 whitespace-nowrap shadow-xs"
+          className="px-3 py-1.5 bg-white hover:bg-red-50 border border-danger-border text-danger text-xs font-medium rounded-lg transition active:scale-98 whitespace-nowrap shadow-xs text-center"
         >
-          Зафиксировать нарушение ({currentUserName})
+          Зафиксировать нарушение
         </button>
       </div>
 
