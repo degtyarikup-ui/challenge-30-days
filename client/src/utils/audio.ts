@@ -1,4 +1,4 @@
-// Web Audio API synthesized pleasant micro-sounds (0ms latency, works offline)
+// Web Audio API synthesized pleasant micro-sounds & triumphant celebratory sound
 
 let audioCtx: AudioContext | null = null;
 
@@ -28,8 +28,8 @@ export function playToggleOnSound() {
     osc.type = 'sine';
     const now = ctx.currentTime;
 
-    osc.frequency.setValueAtTime(440, now); // A4
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08); // A5
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
 
     gain.gain.setValueAtTime(0.12, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
@@ -72,33 +72,55 @@ export function playToggleOffSound() {
   }
 }
 
-// 3. All Done Celebratory Fanfare Chord
+// 3. Rich, Bright & Triumphant All-Done Fanfare Sound
 export function playAllDoneSound() {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
 
-    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6 (Major arpeggio)
     const now = ctx.currentTime;
 
-    notes.forEach((freq, index) => {
+    // Rich bright progression: C5 -> E5 -> G5 -> B5 -> C6 -> E6
+    const notes = [
+      { freq: 523.25, time: 0.00, dur: 0.4 }, // C5
+      { freq: 659.25, time: 0.08, dur: 0.4 }, // E5
+      { freq: 783.99, time: 0.16, dur: 0.5 }, // G5
+      { freq: 987.77, time: 0.24, dur: 0.5 }, // B5
+      { freq: 1046.50, time: 0.32, dur: 0.8 }, // C6 (Power high)
+      { freq: 1318.51, time: 0.40, dur: 0.9 }, // E6 (Sparkle)
+    ];
+
+    notes.forEach(({ freq, time, dur }) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
       osc.type = 'triangle';
-      const noteTime = now + index * 0.08;
+      const noteStart = now + time;
 
-      osc.frequency.setValueAtTime(freq, noteTime);
+      osc.frequency.setValueAtTime(freq, noteStart);
 
-      gain.gain.setValueAtTime(0.15, noteTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+      gain.gain.setValueAtTime(0.18, noteStart);
+      gain.gain.exponentialRampToValueAtTime(0.001, noteStart + dur);
 
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc.start(noteTime);
-      osc.stop(noteTime + 0.36);
+      osc.start(noteStart);
+      osc.stop(noteStart + dur + 0.05);
     });
+
+    // Deep warm sub-bass root for punch
+    const bassOsc = ctx.createOscillator();
+    const bassGain = ctx.createGain();
+    bassOsc.type = 'sine';
+    bassOsc.frequency.setValueAtTime(130.81, now + 0.32); // C3
+    bassGain.gain.setValueAtTime(0.2, now + 0.32);
+    bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.32 + 0.8);
+    bassOsc.connect(bassGain);
+    bassGain.connect(ctx.destination);
+    bassOsc.start(now + 0.32);
+    bassOsc.stop(now + 0.32 + 0.85);
+
   } catch (e) {
     // Audio blocked
   }

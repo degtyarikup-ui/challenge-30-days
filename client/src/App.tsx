@@ -18,6 +18,7 @@ import { Header } from './components/Header';
 import { StreakTracker } from './components/StreakTracker';
 import { TaskList } from './components/TaskList';
 import { CelebrationBanner } from './components/CelebrationBanner';
+import { FullScreenCelebration } from './components/FullScreenCelebration';
 import { RulesModal } from './components/RulesModal';
 import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
@@ -46,6 +47,7 @@ export const App: React.FC = () => {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
   const [contextMenuHabit, setContextMenuHabit] = useState<HabitWithStatus | null>(null);
   const [initialEditingHabit, setInitialEditingHabit] = useState<Habit | null>(null);
+  const [isFullScreenCelebrationOpen, setIsFullScreenCelebrationOpen] = useState(false);
 
   // Load App State
   const loadData = useCallback(async (date?: string) => {
@@ -175,6 +177,7 @@ export const App: React.FC = () => {
       setTimeout(() => {
         playAllDoneSound();
         triggerCelebrationConfetti();
+        setIsFullScreenCelebrationOpen(true);
         triggerHaptic('success');
       }, 100);
     }
@@ -341,7 +344,7 @@ export const App: React.FC = () => {
           daysUntilStart={state.daysUntilStart}
         />
 
-        {/* 2. Celebration Banner when all done */}
+        {/* 2. Non-intrusive Celebration Banner when all done */}
         <CelebrationBanner show={isAllMyDone} />
 
         {/* 3. Compact Habits List with Long-press */}
@@ -357,6 +360,12 @@ export const App: React.FC = () => {
           disabled={isPastDate && !isGracePeriodActiveForPast}
         />
       </main>
+
+      {/* Full-Screen Celebration on Completing Day */}
+      <FullScreenCelebration
+        isOpen={isFullScreenCelebrationOpen}
+        onClose={() => setIsFullScreenCelebrationOpen(false)}
+      />
 
       {/* Context Menu Modal (On Long Press) */}
       <TaskContextMenuModal
