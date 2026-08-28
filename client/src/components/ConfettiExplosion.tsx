@@ -12,41 +12,40 @@ const COLORS = [
 
 interface Particle {
   id: number;
-  x: number;
-  y: number;
   vx: number;
   vy: number;
-  rot: number;
   vRot: number;
   scale: number;
   color: string;
-  shape: 'rect' | 'circle' | 'diamond';
+  shape: 'rect' | 'circle' | 'diamond' | 'ribbon';
+  duration: number;
   delay: number;
 }
 
 export const ConfettiExplosion: React.FC = () => {
   const particles: Particle[] = useMemo(() => {
     const list: Particle[] = [];
-    const count = 75;
+    const count = 90;
 
     for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-      const velocity = 180 + Math.random() * 260; // Spread radius px
-      const vx = Math.cos(angle) * velocity;
-      const vy = Math.sin(angle) * velocity - 60; // slight upward bias
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 160 + Math.random() * 280; // Large 360-degree spread
+      const vx = Math.cos(angle) * distance;
+      const vy = Math.sin(angle) * distance + 40; // slight gravity drift
+
+      const shapes: Array<'rect' | 'circle' | 'diamond' | 'ribbon'> = ['rect', 'circle', 'diamond', 'ribbon'];
+      const shape = shapes[i % shapes.length];
 
       list.push({
         id: i,
-        x: 0,
-        y: 0,
-        vx,
-        vy,
-        rot: Math.random() * 360,
-        vRot: (Math.random() - 0.5) * 720,
-        scale: 0.7 + Math.random() * 0.6,
+        vx: Math.round(vx),
+        vy: Math.round(vy),
+        vRot: Math.round((Math.random() - 0.5) * 800),
+        scale: Number((0.7 + Math.random() * 0.7).toFixed(2)),
         color: COLORS[i % COLORS.length],
-        shape: i % 3 === 0 ? 'rect' : i % 3 === 1 ? 'circle' : 'diamond',
-        delay: Math.random() * 0.15,
+        shape,
+        duration: Number((1.5 + Math.random() * 0.5).toFixed(2)),
+        delay: Number((Math.random() * 0.12).toFixed(2)),
       });
     }
     return list;
@@ -59,26 +58,34 @@ export const ConfettiExplosion: React.FC = () => {
           key={p.id}
           className="absolute"
           style={{
-            transform: `translate3d(${p.vx}px, ${p.vy}px, 0) rotate(${p.vRot}deg) scale(${p.scale})`,
-            transition: 'transform 1.8s cubic-bezier(0.12, 0.8, 0.33, 1), opacity 1.8s ease-out',
-            animation: `confetti-fall-${p.id % 4} 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) ${p.delay}s forwards`,
+            ['--tx' as any]: `${p.vx}px`,
+            ['--ty' as any]: `${p.vy}px`,
+            ['--rot' as any]: `${p.vRot}deg`,
+            ['--sc' as any]: p.scale,
+            animation: `confetti-burst ${p.duration}s cubic-bezier(0.12, 0.8, 0.33, 1) ${p.delay}s forwards`,
           }}
         >
           {p.shape === 'circle' && (
             <div
-              className="w-3 h-3 rounded-full shadow-sm"
+              className="w-3.5 h-3.5 rounded-full shadow-sm"
               style={{ backgroundColor: p.color }}
             />
           )}
           {p.shape === 'rect' && (
             <div
-              className="w-3.5 h-2 rounded-xs shadow-sm"
+              className="w-4 h-2 rounded-xs shadow-sm"
               style={{ backgroundColor: p.color }}
             />
           )}
           {p.shape === 'diamond' && (
             <div
-              className="w-2.5 h-2.5 rotate-45 shadow-sm"
+              className="w-3 h-3 rotate-45 shadow-sm"
+              style={{ backgroundColor: p.color }}
+            />
+          )}
+          {p.shape === 'ribbon' && (
+            <div
+              className="w-5 h-1.5 rounded-full shadow-sm"
               style={{ backgroundColor: p.color }}
             />
           )}

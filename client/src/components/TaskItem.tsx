@@ -3,7 +3,6 @@ import { HabitWithStatus, UserId } from '../types';
 import { Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 import { playToggleOnSound, playToggleOffSound } from '../utils/audio';
-import { triggerMicroConfetti } from '../utils/confetti';
 import { renderHabitIcon } from '../utils/icons';
 
 interface TaskItemProps {
@@ -69,11 +68,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
     setIsPending(true);
 
-    // Audio & Haptic & Micro-confetti burst
+    // Audio & Haptic & Animation
     if (!isMyDone) {
       playToggleOnSound();
       triggerHaptic('success');
-      triggerMicroConfetti(e.clientX, e.clientY);
       setJustCompleted(true);
       setTimeout(() => setJustCompleted(false), 500);
     } else {
