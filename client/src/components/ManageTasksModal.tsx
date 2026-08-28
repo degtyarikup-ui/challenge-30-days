@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Habit, HabitCategory, TargetType, AssignedTo } from '../types';
 import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal, CalendarDays, User, Users } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
+import { HABIT_ICONS_LIST, renderHabitIcon } from '../utils/icons';
 
 interface ManageTasksModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   const [title, setTitle] = useState('');
   const [targetType, setTargetType] = useState<TargetType>('number');
   const [assignedTo, setAssignedTo] = useState<AssignedTo>('both');
+  const [selectedIcon, setSelectedIcon] = useState<string>('footprints');
   const [targetSereja, setTargetSereja] = useState('');
   const [targetLera, setTargetLera] = useState('');
   const [unit, setUnit] = useState('');
@@ -52,6 +54,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
       setTitle(initialEditingHabit.title);
       setTargetType(initialEditingHabit.target_type);
       setAssignedTo(initialEditingHabit.assigned_to || 'both');
+      setSelectedIcon(initialEditingHabit.icon || 'footprints');
       setTargetSereja(initialEditingHabit.target_sereja);
       setTargetLera(initialEditingHabit.target_lera);
       setUnit(initialEditingHabit.unit);
@@ -67,6 +70,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
     setTitle('');
     setTargetType('number');
     setAssignedTo('both');
+    setSelectedIcon('footprints');
     setTargetSereja('');
     setTargetLera('');
     setUnit('');
@@ -79,6 +83,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
     setTitle(h.title);
     setTargetType(h.target_type);
     setAssignedTo(h.assigned_to || 'both');
+    setSelectedIcon(h.icon || 'footprints');
     setTargetSereja(h.target_sereja);
     setTargetLera(h.target_lera);
     setUnit(h.unit);
@@ -96,6 +101,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
           title: title.trim(),
           target_type: targetType,
           assigned_to: assignedTo,
+          icon: selectedIcon,
           target_sereja: targetSereja.trim(),
           target_lera: targetLera.trim(),
           unit: unit.trim(),
@@ -106,6 +112,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
           category: activeTab,
           target_type: activeTab === 'passive' ? 'checkbox' : targetType,
           assigned_to: assignedTo,
+          icon: selectedIcon,
           target_sereja: targetSereja.trim(),
           target_lera: targetLera.trim(),
           unit: unit.trim(),
@@ -219,6 +226,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               </button>
             </div>
 
+            {/* Title */}
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-text-black">Название:</label>
               <input
@@ -233,6 +241,37 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
 
             {activeTab === 'active' && (
               <>
+                {/* 40 Icons Picker Grid */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-text-black">Иконка цели:</label>
+                  <div className="bg-white p-2.5 rounded-2xl max-h-32 overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-8 gap-1.5">
+                      {HABIT_ICONS_LIST.map((iconItem) => {
+                        const isSelected = selectedIcon === iconItem.id;
+                        const IconComp = iconItem.icon;
+                        return (
+                          <button
+                            key={iconItem.id}
+                            type="button"
+                            onClick={() => {
+                              triggerHaptic('light');
+                              setSelectedIcon(iconItem.id);
+                            }}
+                            title={iconItem.name}
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                              isSelected
+                                ? 'bg-lime text-black scale-105 font-bold shadow-xs'
+                                : 'bg-surface-muted hover:bg-surface-subtle text-text-black'
+                            }`}
+                          >
+                            <IconComp className="w-4 h-4 stroke-[2.2]" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Assignee selection */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-text-black">Кому назначить:</label>
@@ -345,24 +384,29 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               key={item.id}
               className="p-3 bg-surface-muted rounded-2xl flex items-center justify-between gap-2"
             >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <p className="text-xs font-bold text-text-black truncate">{item.title}</p>
-                  {item.assigned_to && item.assigned_to !== 'both' && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white text-text-muted">
-                      {item.assigned_to === 'sereja' ? 'Серёжа' : 'Лера'}
-                    </span>
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+                  {renderHabitIcon(item.icon, item.title, false, 'w-4 h-4')}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold text-text-black truncate">{item.title}</p>
+                    {item.assigned_to && item.assigned_to !== 'both' && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white text-text-muted">
+                        {item.assigned_to === 'sereja' ? 'Серёжа' : 'Лера'}
+                      </span>
+                    )}
+                  </div>
+                  {item.category === 'active' && (
+                    <p className="text-[11px] font-medium text-text-muted mt-0.5">
+                      {item.assigned_to === 'both' || !item.assigned_to
+                        ? `Серёжа: ${item.target_sereja} ${item.unit} • Лера: ${item.target_lera} ${item.unit}`
+                        : item.assigned_to === 'sereja'
+                        ? `Серёжа: ${item.target_sereja} ${item.unit}`
+                        : `Лера: ${item.target_lera} ${item.unit}`}
+                    </p>
                   )}
                 </div>
-                {item.category === 'active' && (
-                  <p className="text-[11px] font-medium text-text-muted mt-0.5">
-                    {item.assigned_to === 'both' || !item.assigned_to
-                      ? `Серёжа: ${item.target_sereja} ${item.unit} • Лера: ${item.target_lera} ${item.unit}`
-                      : item.assigned_to === 'sereja'
-                      ? `Серёжа: ${item.target_sereja} ${item.unit}`
-                      : `Лера: ${item.target_lera} ${item.unit}`}
-                  </p>
-                )}
               </div>
 
               <div className="flex items-center gap-1">

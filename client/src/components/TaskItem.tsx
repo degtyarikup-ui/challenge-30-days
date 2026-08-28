@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { HabitWithStatus, UserId } from '../types';
-import { Footprints, Moon, Dumbbell, BookOpen, CheckSquare2, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 import { playToggleOnSound, playToggleOffSound } from '../utils/audio';
+import { renderHabitIcon } from '../utils/icons';
 
 interface TaskItemProps {
   habit: HabitWithStatus;
@@ -22,16 +23,6 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const [isPending, setIsPending] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressRef = useRef(false);
-
-  const getIcon = (title: string, isDark: boolean) => {
-    const t = title.toLowerCase();
-    const colorClass = isDark ? 'text-lime' : 'text-text-black';
-    if (t.includes('шаг') || t.includes('ходьб')) return <Footprints className={`w-4 h-4 ${colorClass}`} />;
-    if (t.includes('сон') || t.includes('спать') || t.includes('сн')) return <Moon className={`w-4 h-4 ${colorClass}`} />;
-    if (t.includes('спорт') || t.includes('тренировк') || t.includes('зал')) return <Dumbbell className={`w-4 h-4 ${colorClass}`} />;
-    if (t.includes('англ') || t.includes('чтени') || t.includes('книг') || t.includes('учеб')) return <BookOpen className={`w-4 h-4 ${colorClass}`} />;
-    return <CheckSquare2 className={`w-4 h-4 ${colorClass}`} />;
-  };
 
   const isSerejaDone = habit.status_sereja.completed;
   const isLeraDone = habit.status_lera.completed;
@@ -117,7 +108,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               isMyDone ? 'bg-white/10' : 'bg-surface-muted'
             }`}
           >
-            {getIcon(habit.title, isMyDone)}
+            {renderHabitIcon(habit.icon, habit.title, isMyDone, 'w-4 h-4')}
           </div>
 
           <div className="min-w-0 flex-1">

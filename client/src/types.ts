@@ -22,6 +22,7 @@ export interface Habit {
   target_sereja: string;
   target_lera: string;
   unit: string;
+  icon?: string;
   assigned_to?: AssignedTo;
   is_active: number;
   order_index: number;
