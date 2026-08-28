@@ -10,6 +10,21 @@
   }
 }
 
+@keyframes flame-sway {
+  0%, 100% {
+    transform: scale(1) rotate(-3deg);
+    filter: drop-shadow(0 0 25px rgba(212, 255, 0, 0.6));
+  }
+  50% {
+    transform: scale(1.08) rotate(3deg);
+    filter: drop-shadow(0 0 45px rgba(212, 255, 0, 0.9));
+  }
+}
+
+.animate-flame-sway {
+  animation: flame-sway 2s ease-in-out infinite;
+}
+
 /* Minimalist scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
