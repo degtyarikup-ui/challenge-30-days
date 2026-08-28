@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserId } from '../types';
-import { Calendar, SlidersHorizontal, Clock } from 'lucide-react';
+import { Calendar, SlidersHorizontal, Clock, Shield } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface HeaderProps {
@@ -12,6 +12,7 @@ interface HeaderProps {
   onSelectDate: (date: string) => void;
   onOpenManageModal: () => void;
   onOpenHistoryModal: () => void;
+  onOpenRulesModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,29 +24,30 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectDate,
   onOpenManageModal,
   onOpenHistoryModal,
+  onOpenRulesModal,
 }) => {
   const isViewingYesterday = selectedDate === yesterdayDate;
 
   return (
-    <header className="px-4 pt-4 pb-2 sm:px-6">
+    <header className="px-4 pt-3 pb-1 sm:px-6">
       <div className="max-w-xl mx-auto flex items-center justify-between">
-        {/* User Identity & Title */}
-        <div className="flex items-center gap-2.5">
-          <div className="bg-card-dark text-white px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
+        {/* User Identity & Date */}
+        <div className="flex items-center gap-2">
+          <div className="bg-card-dark text-white px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-lime" />
             <span className="text-xs font-bold tracking-wide">
               {currentUserId === 'sereja' ? 'Серёжа' : 'Лера'}
             </span>
           </div>
 
           {/* Date Selector Pills */}
-          <div className="flex items-center gap-1 bg-white p-1 rounded-full shadow-card text-xs font-semibold">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-full text-xs font-bold">
             <button
               onClick={() => {
                 triggerHaptic('light');
                 onSelectDate(actualDate);
               }}
-              className={`px-3 py-1 rounded-full transition ${
+              className={`px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95 ${
                 !isViewingYesterday
                   ? 'bg-card-dark text-white'
                   : 'text-text-muted hover:text-text-black'
@@ -60,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
                   triggerHaptic('light');
                   onSelectDate(yesterdayDate);
                 }}
-                className={`flex items-center gap-1 px-3 py-1 rounded-full transition ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95 ${
                   isViewingYesterday
                     ? 'bg-lime text-black font-bold'
                     : 'text-text-muted hover:text-text-black'
@@ -74,13 +76,25 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onOpenRulesModal();
+            }}
+            className="h-9 px-3 rounded-2xl bg-white hover:bg-surface-subtle flex items-center gap-1.5 text-text-black text-xs font-bold transition-all duration-150 active:scale-95"
+            title="Правила питания и срыв"
+          >
+            <Shield className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span className="hidden sm:inline">Правила</span>
+          </button>
+
           <button
             onClick={() => {
               triggerHaptic('light');
               onOpenHistoryModal();
             }}
-            className="w-10 h-10 rounded-2xl bg-white shadow-card hover:bg-surface-subtle flex items-center justify-center text-text-black transition active:scale-95"
+            className="w-9 h-9 rounded-2xl bg-white hover:bg-surface-subtle flex items-center justify-center text-text-black transition-all duration-150 active:scale-95"
             title="История"
           >
             <Calendar className="w-4 h-4 stroke-[2.2]" />
@@ -91,8 +105,8 @@ export const Header: React.FC<HeaderProps> = ({
               triggerHaptic('light');
               onOpenManageModal();
             }}
-            className="w-10 h-10 rounded-2xl bg-white shadow-card hover:bg-surface-subtle flex items-center justify-center text-text-black transition active:scale-95"
-            title="Цели"
+            className="w-9 h-9 rounded-2xl bg-white hover:bg-surface-subtle flex items-center justify-center text-text-black transition-all duration-150 active:scale-95"
+            title="Настройка целей"
           >
             <SlidersHorizontal className="w-4 h-4 stroke-[2.2]" />
           </button>

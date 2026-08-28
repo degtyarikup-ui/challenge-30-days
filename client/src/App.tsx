@@ -15,7 +15,7 @@ import { initTelegramApp, getTelegramUser, triggerHaptic } from './utils/telegra
 import { Header } from './components/Header';
 import { StreakTracker } from './components/StreakTracker';
 import { TaskList } from './components/TaskList';
-import { PassiveRulesCard } from './components/PassiveRulesCard';
+import { RulesModal } from './components/RulesModal';
 import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
@@ -32,6 +32,7 @@ export const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Modals
+  const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -184,7 +185,7 @@ export const App: React.FC = () => {
   if (showUserSetup) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-white p-7 rounded-3xl max-w-sm w-full space-y-5 shadow-card-elevated text-center">
+        <div className="bg-white p-7 rounded-3xl max-w-sm w-full space-y-5 text-center">
           <div className="space-y-1">
             <h2 className="text-xl font-black text-text-black">Кто вы?</h2>
             <p className="text-xs font-semibold text-text-muted">
@@ -195,7 +196,7 @@ export const App: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button
               onClick={() => handleSelectInitialUser('sereja')}
-              className="p-4 bg-surface-muted hover:bg-lime hover:text-black rounded-2xl text-xs font-bold text-text-black flex flex-col items-center gap-2 transition active:scale-95 shadow-xs"
+              className="p-4 bg-surface-muted hover:bg-lime hover:text-black rounded-2xl text-xs font-bold text-text-black flex flex-col items-center gap-2 transition active:scale-95"
             >
               <User className="w-6 h-6" />
               <span>Серёжа</span>
@@ -203,7 +204,7 @@ export const App: React.FC = () => {
 
             <button
               onClick={() => handleSelectInitialUser('lera')}
-              className="p-4 bg-surface-muted hover:bg-lime hover:text-black rounded-2xl text-xs font-bold text-text-black flex flex-col items-center gap-2 transition active:scale-95 shadow-xs"
+              className="p-4 bg-surface-muted hover:bg-lime hover:text-black rounded-2xl text-xs font-bold text-text-black flex flex-col items-center gap-2 transition active:scale-95"
             >
               <User className="w-6 h-6" />
               <span>Лера</span>
@@ -227,7 +228,7 @@ export const App: React.FC = () => {
   const isGracePeriodActiveForPast = isPastDate && selectedDate === state.yesterdayDate && state.isGracePeriod;
 
   return (
-    <div className="min-h-screen bg-background text-text-black pb-12 flex flex-col selection:bg-lime selection:text-black">
+    <div className="min-h-screen bg-background text-text-black pb-8 flex flex-col selection:bg-lime selection:text-black">
       {/* Header */}
       <Header
         currentUserId={currentUserId}
@@ -238,13 +239,14 @@ export const App: React.FC = () => {
         onSelectDate={handleDateChange}
         onOpenManageModal={() => setIsManageModalOpen(true)}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+        onOpenRulesModal={() => setIsRulesModalOpen(true)}
       />
 
       {/* Main Content */}
-      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-5 flex-1">
+      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-4 flex-1">
         {/* Past Date indicator */}
         {isPastDate && !isGracePeriodActiveForPast && (
-          <div className="bg-white rounded-2xl p-3.5 text-xs font-bold text-text-black flex items-center justify-between shadow-card">
+          <div className="bg-white rounded-2xl p-3 text-xs font-bold text-text-black flex items-center justify-between">
             <span>Просмотр дня: {selectedDate}</span>
             <button
               onClick={() => handleDateChange(state.actualDate)}
@@ -263,7 +265,7 @@ export const App: React.FC = () => {
           daysUntilStart={state.daysUntilStart}
         />
 
-        {/* 2. Active Habits Grid */}
+        {/* 2. Compact Habits List */}
         <TaskList
           habits={state.habits}
           currentUserId={currentUserId}
@@ -271,17 +273,19 @@ export const App: React.FC = () => {
           onOpenManageModal={() => setIsManageModalOpen(true)}
           disabled={isPastDate && !isGracePeriodActiveForPast}
         />
-
-        {/* 3. Passive Rules */}
-        <PassiveRulesCard
-          rules={state.passiveRules}
-          currentUserId={currentUserId}
-          onOpenViolationModal={() => setIsViolationModalOpen(true)}
-          recentViolations={state.recentViolations}
-        />
       </main>
 
       {/* Modals */}
+      <RulesModal
+        isOpen={isRulesModalOpen}
+        onClose={() => setIsRulesModalOpen(false)}
+        rules={state.passiveRules}
+        currentUserId={currentUserId}
+        onOpenViolationModal={() => setIsViolationModalOpen(true)}
+        onOpenManageModal={() => setIsManageModalOpen(true)}
+        recentViolations={state.recentViolations}
+      />
+
       <ViolationModal
         isOpen={isViolationModalOpen}
         onClose={() => setIsViolationModalOpen(false)}
