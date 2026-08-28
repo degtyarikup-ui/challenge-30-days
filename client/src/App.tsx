@@ -174,14 +174,14 @@ export const App: React.FC = () => {
     await loadData(selectedDate);
   };
 
-  // 1-Time User Selection Dialog (only shown if not identified)
+  // 1-Time User Selection Dialog
   if (showUserSetup) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="bg-surface border border-border p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-sm text-center">
+        <div className="bg-white p-7 rounded-3xl max-w-sm w-full space-y-5 shadow-card-elevated text-center">
           <div className="space-y-1">
-            <h2 className="text-base font-semibold text-text-primary">Кто вы?</h2>
-            <p className="text-xs text-text-secondary">
+            <h2 className="text-xl font-black text-text-black">Кто вы?</h2>
+            <p className="text-xs font-semibold text-text-muted">
               Выберите свой профиль для этого устройства.
             </p>
           </div>
@@ -189,17 +189,17 @@ export const App: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button
               onClick={() => handleSelectInitialUser('sereja')}
-              className="p-3.5 bg-white hover:bg-sereja-light border border-border hover:border-sereja-border rounded-xl text-xs font-medium text-sereja-text flex flex-col items-center gap-1.5 transition active:scale-98"
+              className="p-4 bg-surface-muted hover:bg-lime hover:text-black rounded-2xl text-xs font-bold text-text-black flex flex-col items-center gap-2 transition active:scale-95 shadow-xs"
             >
-              <User className="w-5 h-5 text-sereja" />
+              <User className="w-6 h-6" />
               <span>Серёжа</span>
             </button>
 
             <button
               onClick={() => handleSelectInitialUser('lera')}
-              className="p-3.5 bg-white hover:bg-lera-light border border-border hover:border-lera-border rounded-xl text-xs font-medium text-lera-text flex flex-col items-center gap-1.5 transition active:scale-98"
+              className="p-4 bg-surface-muted hover:bg-lime hover:text-black rounded-2xl text-xs font-bold text-text-black flex flex-col items-center gap-2 transition active:scale-95 shadow-xs"
             >
-              <User className="w-5 h-5 text-lera" />
+              <User className="w-6 h-6" />
               <span>Лера</span>
             </button>
           </div>
@@ -210,9 +210,9 @@ export const App: React.FC = () => {
 
   if (loading || !state || !currentUserId) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-2 text-text-secondary">
-        <RefreshCw className="w-4 h-4 animate-spin text-text-muted" />
-        <span className="text-xs">Загрузка...</span>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-2 text-text-muted">
+        <RefreshCw className="w-6 h-6 animate-spin text-text-black" />
+        <span className="text-xs font-bold">Загрузка...</span>
       </div>
     );
   }
@@ -221,7 +221,7 @@ export const App: React.FC = () => {
   const isGracePeriodActiveForPast = isPastDate && selectedDate === state.yesterdayDate && state.isGracePeriod;
 
   return (
-    <div className="min-h-screen bg-background text-text-primary pb-12 flex flex-col">
+    <div className="min-h-screen bg-background text-text-black pb-12 flex flex-col selection:bg-lime selection:text-black">
       {/* Header */}
       <Header
         currentUserId={currentUserId}
@@ -235,24 +235,24 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className="max-w-2xl w-full mx-auto px-4 sm:px-6 py-4 space-y-4 flex-1">
+      <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-5 flex-1">
         {/* Past Date indicator */}
         {isPastDate && !isGracePeriodActiveForPast && (
-          <div className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-secondary flex items-center justify-between">
+          <div className="bg-white rounded-2xl p-3.5 text-xs font-bold text-text-black flex items-center justify-between shadow-card">
             <span>Просмотр дня: {selectedDate}</span>
             <button
               onClick={() => handleDateChange(state.actualDate)}
-              className="text-sereja hover:underline font-medium"
+              className="text-black underline font-extrabold"
             >
               Вернуться на сегодня
             </button>
           </div>
         )}
 
-        {/* 1. Streak Tracker */}
+        {/* 1. Lime Hero Card & Streak Tracker */}
         <StreakTracker users={state.users} currentUserId={currentUserId} />
 
-        {/* 2. Active Habits */}
+        {/* 2. Active Habits Grid */}
         <TaskList
           habits={state.habits}
           currentUserId={currentUserId}

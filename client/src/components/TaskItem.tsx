@@ -1,6 +1,6 @@
 import React from 'react';
 import { HabitWithStatus, UserId } from '../types';
-import { Check, Footprints, Moon, Dumbbell, BookOpen, CheckSquare2, Circle } from 'lucide-react';
+import { Footprints, Moon, Dumbbell, BookOpen, CheckSquare2, Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface TaskItemProps {
@@ -16,134 +16,115 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggle,
   disabled = false,
 }) => {
-  const getIcon = (title: string) => {
+  const getIcon = (title: string, isDark: boolean) => {
     const t = title.toLowerCase();
-    if (t.includes('шаг') || t.includes('ходьб')) return <Footprints className="w-4 h-4 text-text-secondary" />;
-    if (t.includes('сон') || t.includes('спать') || t.includes('сн')) return <Moon className="w-4 h-4 text-text-secondary" />;
-    if (t.includes('спорт') || t.includes('тренировк') || t.includes('зал')) return <Dumbbell className="w-4 h-4 text-text-secondary" />;
-    if (t.includes('англ') || t.includes('чтени') || t.includes('книг') || t.includes('учеб')) return <BookOpen className="w-4 h-4 text-text-secondary" />;
-    return <CheckSquare2 className="w-4 h-4 text-text-secondary" />;
+    const colorClass = isDark ? 'text-lime' : 'text-text-black';
+    if (t.includes('шаг') || t.includes('ходьб')) return <Footprints className={`w-5 h-5 ${colorClass}`} />;
+    if (t.includes('сон') || t.includes('спать') || t.includes('сн')) return <Moon className={`w-5 h-5 ${colorClass}`} />;
+    if (t.includes('спорт') || t.includes('тренировк') || t.includes('зал')) return <Dumbbell className={`w-5 h-5 ${colorClass}`} />;
+    if (t.includes('англ') || t.includes('чтени') || t.includes('книг') || t.includes('учеб')) return <BookOpen className={`w-5 h-5 ${colorClass}`} />;
+    return <CheckSquare2 className={`w-5 h-5 ${colorClass}`} />;
   };
 
-  const hasDistinctTargets = habit.target_sereja && habit.target_lera && habit.target_sereja !== habit.target_lera;
   const isSerejaDone = habit.status_sereja.completed;
   const isLeraDone = habit.status_lera.completed;
 
   const isMyDone = currentUserId === 'sereja' ? isSerejaDone : isLeraDone;
+  const isPartnerDone = currentUserId === 'sereja' ? isLeraDone : isSerejaDone;
+  const partnerName = currentUserId === 'sereja' ? 'Лера' : 'Серёжа';
 
-  const handleMyClick = () => {
+  const myTarget = currentUserId === 'sereja' ? habit.target_sereja : habit.target_lera;
+  const partnerTarget = currentUserId === 'sereja' ? habit.target_lera : habit.target_sereja;
+  const hasDistinctTargets = habit.target_sereja && habit.target_lera && habit.target_sereja !== habit.target_lera;
+
+  const handleMyToggle = () => {
     if (disabled) return;
     triggerHaptic(isMyDone ? 'light' : 'success');
     onToggle(habit.id, isMyDone);
   };
 
   return (
-    <div className="p-3 sm:p-3.5 bg-white border border-border hover:border-border-strong rounded-xl transition flex items-center justify-between gap-3">
-      {/* Left: Icon, Title & Targets */}
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        <div className="w-8 h-8 rounded-lg bg-surface-subtle border border-border flex items-center justify-center flex-shrink-0">
-          {getIcon(habit.title)}
+    <div
+      className={`rounded-3xl p-4 sm:p-5 transition-all duration-200 ${
+        isMyDone
+          ? 'bg-card-dark text-white shadow-dark'
+          : 'bg-white text-text-black shadow-card'
+      }`}
+    >
+      {/* Top: Icon & Partner Status Pill */}
+      <div className="flex items-center justify-between mb-3">
+        <div
+          className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+            isMyDone ? 'bg-white/10' : 'bg-surface-muted'
+          }`}
+        >
+          {getIcon(habit.title, isMyDone)}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-medium text-text-primary truncate">
-            {habit.title}
-          </h3>
-
-          <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-text-secondary">
-            {hasDistinctTargets ? (
-              <div className="flex items-center gap-2 text-[11px]">
-                <span className="text-sereja-text bg-sereja-light border border-sereja-border px-1.5 py-0.2 rounded font-medium">
-                  Серёжа: {habit.target_sereja} {habit.unit}
-                </span>
-                <span className="text-lera-text bg-lera-light border border-lera-border px-1.5 py-0.2 rounded font-medium">
-                  Лера: {habit.target_lera} {habit.unit}
-                </span>
-              </div>
-            ) : (
-              habit.target_sereja && (
-                <span className="text-[11px] text-text-secondary">
-                  Цель: {habit.target_sereja} {habit.unit}
-                </span>
-              )
-            )}
-          </div>
+        {/* Partner Status Pill */}
+        <div
+          className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+            isPartnerDone
+              ? 'bg-lime text-black'
+              : isMyDone
+              ? 'bg-white/10 text-white/60'
+              : 'bg-surface-muted text-text-muted'
+          }`}
+          title={`${partnerName}: ${isPartnerDone ? 'Выполнено' : 'Не выполнено'}`}
+        >
+          {isPartnerDone && <Check className="w-3 h-3 stroke-[3]" />}
+          <span>
+            {partnerName}: {isPartnerDone ? 'Готово' : 'В процессе'}
+          </span>
         </div>
       </div>
 
-      {/* Right: Personal Interactive Checkbox + Partner Status Indicator */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Sereja */}
-        {currentUserId === 'sereja' ? (
-          <button
-            onClick={handleMyClick}
-            disabled={disabled}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer active:scale-95 ${
-              isSerejaDone
-                ? 'bg-sereja text-white border-sereja'
-                : 'bg-white hover:bg-sereja-light text-text-secondary border-border hover:border-sereja-border'
-            }`}
-          >
-            {isSerejaDone ? (
-              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-            ) : (
-              <Circle className="w-3.5 h-3.5 text-text-muted" />
-            )}
-            <span className="text-[11px]">Серёжа</span>
-          </button>
-        ) : (
-          <div
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-default select-none ${
-              isSerejaDone
-                ? 'bg-sereja-light text-sereja-text border-sereja-border'
-                : 'bg-surface-subtle text-text-muted border-border'
-            }`}
-            title="Статус Серёжи (только для просмотра)"
-          >
-            {isSerejaDone ? (
-              <Check className="w-3.5 h-3.5 text-sereja stroke-[2.5]" />
-            ) : (
-              <Circle className="w-3.5 h-3.5 text-text-muted" />
-            )}
-            <span className="text-[11px]">Серёжа</span>
-          </div>
-        )}
+      {/* Title & Target Description */}
+      <div className="mb-4">
+        <h3 className="text-base sm:text-lg font-black tracking-tight">
+          {habit.title}
+        </h3>
 
-        {/* Lera */}
-        {currentUserId === 'lera' ? (
-          <button
-            onClick={handleMyClick}
-            disabled={disabled}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer active:scale-95 ${
-              isLeraDone
-                ? 'bg-lera text-white border-lera'
-                : 'bg-white hover:bg-lera-light text-text-secondary border-border hover:border-lera-border'
-            }`}
-          >
-            {isLeraDone ? (
-              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-            ) : (
-              <Circle className="w-3.5 h-3.5 text-text-muted" />
-            )}
-            <span className="text-[11px]">Лера</span>
-          </button>
-        ) : (
+        <div className="text-xs font-semibold mt-1">
+          {hasDistinctTargets ? (
+            <span className={isMyDone ? 'text-white/70' : 'text-text-muted'}>
+              Моя цель: <b className={isMyDone ? 'text-lime' : 'text-text-black'}>{myTarget} {habit.unit}</b>
+              <span className="mx-1.5 opacity-40">•</span>
+              {partnerName}: {partnerTarget} {habit.unit}
+            </span>
+          ) : (
+            myTarget && (
+              <span className={isMyDone ? 'text-white/70' : 'text-text-muted'}>
+                Цель: <b className={isMyDone ? 'text-lime' : 'text-text-black'}>{myTarget} {habit.unit}</b>
+              </span>
+            )
+          )}
+        </div>
+      </div>
+
+      {/* Bottom: Interactive Switch Control (Reference Style) */}
+      <div
+        onClick={handleMyToggle}
+        className={`flex items-center justify-between pt-3 border-t cursor-pointer select-none ${
+          isMyDone ? 'border-white/10' : 'border-black/5'
+        }`}
+      >
+        <span className={`text-xs font-bold ${isMyDone ? 'text-lime' : 'text-text-muted'}`}>
+          {isMyDone ? 'Выполнено' : 'Не выполнено'}
+        </span>
+
+        {/* Custom iOS/Reference Pill Switch */}
+        <div
+          className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out flex items-center ${
+            isMyDone ? 'bg-lime justify-end' : 'bg-surface-subtle justify-start'
+          }`}
+        >
           <div
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border cursor-default select-none ${
-              isLeraDone
-                ? 'bg-lera-light text-lera-text border-lera-border'
-                : 'bg-surface-subtle text-text-muted border-border'
+            className={`w-5 h-5 rounded-full shadow-sm transition-transform duration-200 ${
+              isMyDone ? 'bg-black' : 'bg-white'
             }`}
-            title="Статус Леры (только для просмотра)"
-          >
-            {isLeraDone ? (
-              <Check className="w-3.5 h-3.5 text-lera stroke-[2.5]" />
-            ) : (
-              <Circle className="w-3.5 h-3.5 text-text-muted" />
-            )}
-            <span className="text-[11px]">Лера</span>
-          </div>
-        )}
+          />
+        </div>
       </div>
     </div>
   );

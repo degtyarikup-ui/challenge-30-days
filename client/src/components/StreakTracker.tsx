@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, UserId } from '../types';
-import { Activity } from 'lucide-react';
+import { Flame, CheckCircle2 } from 'lucide-react';
 
 interface StreakTrackerProps {
   users: Record<UserId, User>;
@@ -11,75 +11,58 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({ users, currentUser
   const sereja = users.sereja || { current_streak: 1, max_streak: 1, name: 'Серёжа' };
   const lera = users.lera || { current_streak: 1, max_streak: 1, name: 'Лера' };
 
+  const myUser = currentUserId === 'sereja' ? sereja : lera;
+
   return (
-    <div className="bg-surface rounded-xl border border-border p-4 sm:p-5 space-y-3">
-      {/* Header */}
+    <div className="bg-lime text-black rounded-4xl p-5 sm:p-6 shadow-lime relative overflow-hidden transition-all">
+      {/* Top row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Activity className="w-4 h-4 text-text-secondary" />
-          <h2 className="text-sm font-semibold text-text-primary">
-            Прогресс
-          </h2>
+        <div className="flex items-center gap-1.5 bg-black/10 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase">
+          <Flame className="w-3.5 h-3.5 fill-black" />
+          <span>30 Дней</span>
+        </div>
+
+        <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-black shadow-xs">
+          <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
         </div>
       </div>
 
-      {/* Dual Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Sereja */}
-        <div
-          className={`p-3 rounded-lg border transition ${
-            currentUserId === 'sereja'
-              ? 'bg-sereja-light border-sereja-border'
-              : 'bg-white border-border'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
-            <span className="font-medium text-sereja-text">Серёжа</span>
-            <span className="text-[11px]">Рекорд: {sereja.max_streak} дн.</span>
-          </div>
+      {/* Main Big Counter */}
+      <div className="my-4">
+        <div className="flex items-baseline gap-2">
+          <span className="text-4xl sm:text-5xl font-black tracking-tight text-black">
+            День {myUser.current_streak}
+          </span>
+          <span className="text-base font-bold text-black/60">/ 30</span>
+        </div>
+      </div>
 
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-text-primary">
-              {sereja.current_streak}
-            </span>
-            <span className="text-xs text-text-secondary">/ 30 дн.</span>
+      {/* 3 Columns Sub-stats */}
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-black/10">
+        <div>
+          <div className="text-base sm:text-lg font-black text-black">
+            {sereja.current_streak} дн.
           </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-200/80 rounded-full h-1.5 mt-2.5 overflow-hidden">
-            <div
-              className="bg-sereja h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (sereja.current_streak / 30) * 100)}%` }}
-            />
+          <div className="text-[11px] font-semibold text-black/70">
+            Серёжа (Макс: {sereja.max_streak})
           </div>
         </div>
 
-        {/* Lera */}
-        <div
-          className={`p-3 rounded-lg border transition ${
-            currentUserId === 'lera'
-              ? 'bg-lera-light border-lera-border'
-              : 'bg-white border-border'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
-            <span className="font-medium text-lera-text">Лера</span>
-            <span className="text-[11px]">Рекорд: {lera.max_streak} дн.</span>
+        <div>
+          <div className="text-base sm:text-lg font-black text-black">
+            {lera.current_streak} дн.
           </div>
-
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-text-primary">
-              {lera.current_streak}
-            </span>
-            <span className="text-xs text-text-secondary">/ 30 дн.</span>
+          <div className="text-[11px] font-semibold text-black/70">
+            Лера (Макс: {lera.max_streak})
           </div>
+        </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-200/80 rounded-full h-1.5 mt-2.5 overflow-hidden">
-            <div
-              className="bg-lera h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (lera.current_streak / 30) * 100)}%` }}
-            />
+        <div>
+          <div className="text-base sm:text-lg font-black text-black">
+            {Math.round((myUser.current_streak / 30) * 100)}%
+          </div>
+          <div className="text-[11px] font-semibold text-black/70">
+            Пройдено
           </div>
         </div>
       </div>

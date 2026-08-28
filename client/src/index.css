@@ -4,16 +4,15 @@
 
 @layer base {
   body {
-    @apply bg-background text-text-primary antialiased;
+    @apply bg-background text-text-black antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-tap-highlight-color: transparent;
-    letter-spacing: -0.011em;
   }
 }
 
-/* Notion minimalist scrollbar */
+/* Minimalist scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -21,15 +20,15 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #d4d4d0;
-  border-radius: 4px;
+  background: #D5D7DF;
+  border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #b8b8b4;
+  background: #B4B7C2;
 }
 
 /* Safe area padding for Telegram on iOS */
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 20px);
+  padding-bottom: env(safe-area-inset-bottom, 24px);
 }

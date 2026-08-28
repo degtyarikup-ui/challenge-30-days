@@ -99,13 +99,13 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white border border-border w-full max-w-lg rounded-2xl p-5 shadow-xl space-y-3.5 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-4 h-4 text-text-secondary" />
-            <h3 className="text-base font-semibold text-text-primary">
+            <SlidersHorizontal className="w-5 h-5 text-text-black" />
+            <h3 className="text-lg font-black text-text-black">
               Настройка целей
             </h3>
           </div>
@@ -114,32 +114,32 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               triggerHaptic('light');
               onClose();
             }}
-            className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-hover transition"
+            className="w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-black hover:bg-surface-subtle transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center bg-surface-subtle p-0.5 rounded-lg border border-border">
+        <div className="flex items-center bg-surface-muted p-1 rounded-2xl">
           <button
             onClick={() => {
               setActiveTab('active');
               resetForm();
             }}
-            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === 'active' ? 'bg-white text-text-primary border border-border shadow-xs' : 'text-text-secondary hover:text-text-primary'
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${
+              activeTab === 'active' ? 'bg-card-dark text-white shadow-xs' : 'text-text-muted hover:text-text-black'
             }`}
           >
-            Ежедневные привычки ({habits.length})
+            Привычки ({habits.length})
           </button>
           <button
             onClick={() => {
               setActiveTab('passive');
               resetForm();
             }}
-            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === 'passive' ? 'bg-white text-text-primary border border-border shadow-xs' : 'text-text-secondary hover:text-text-primary'
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${
+              activeTab === 'passive' ? 'bg-card-dark text-white shadow-xs' : 'text-text-muted hover:text-text-black'
             }`}
           >
             Правила питания ({passiveRules.length})
@@ -153,37 +153,37 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               triggerHaptic('light');
               setIsCreating(true);
             }}
-            className="w-full py-2 bg-surface-subtle border border-dashed border-border hover:bg-surface-hover rounded-lg text-xs font-medium text-text-primary flex items-center justify-center gap-1.5 transition"
+            className="w-full py-3 bg-surface-muted hover:bg-surface-subtle rounded-2xl text-xs font-bold text-text-black flex items-center justify-center gap-1.5 transition active:scale-98"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             Добавить {activeTab === 'active' ? 'привычку' : 'правило питания'}
           </button>
         )}
 
         {/* Create / Edit Form */}
         {(isCreating || editingId) && (
-          <form onSubmit={handleSubmit} className="bg-surface-subtle border border-border p-3.5 rounded-xl space-y-2.5">
+          <form onSubmit={handleSubmit} className="bg-surface-muted p-4 rounded-3xl space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-medium text-text-primary">
-                {editingId ? 'Редактирование' : 'Новая цель'}
+              <h4 className="text-xs font-bold text-text-black">
+                {editingId ? 'Редактирование цели' : 'Новая цель'}
               </h4>
               <button
                 type="button"
                 onClick={resetForm}
-                className="text-xs text-text-secondary hover:text-text-primary"
+                className="text-xs font-semibold text-text-muted hover:text-text-black"
               >
                 Отмена
               </button>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-medium text-text-secondary">Название:</label>
+              <label className="text-[11px] font-bold text-text-black">Название:</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Название цели"
-                className="w-full bg-white border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-border-strong"
+                className="w-full bg-white rounded-xl px-3 py-2 text-xs font-semibold text-text-black focus:outline-none"
                 required
               />
             </div>
@@ -192,11 +192,11 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-text-secondary">Тип:</label>
+                    <label className="text-[11px] font-bold text-text-black">Тип:</label>
                     <select
                       value={targetType}
                       onChange={(e) => setTargetType(e.target.value as TargetType)}
-                      className="w-full bg-white border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-border-strong"
+                      className="w-full bg-white rounded-xl px-3 py-2 text-xs font-semibold text-text-black focus:outline-none"
                     >
                       <option value="number">Число / Количество</option>
                       <option value="time">Время (Сон)</option>
@@ -205,37 +205,37 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-text-secondary">Единица (шагов, мин):</label>
+                    <label className="text-[11px] font-bold text-text-black">Единица (шагов, мин):</label>
                     <input
                       type="text"
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
                       placeholder="шагов / мин"
-                      className="w-full bg-white border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-border-strong"
+                      className="w-full bg-white rounded-xl px-3 py-2 text-xs font-semibold text-text-black focus:outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-lg border border-border">
+                <div className="grid grid-cols-2 gap-2 bg-white p-3 rounded-2xl">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-sereja-text">Серёжа:</label>
+                    <label className="text-[11px] font-bold text-text-black">Серёжа:</label>
                     <input
                       type="text"
                       value={targetSereja}
                       onChange={(e) => setTargetSereja(e.target.value)}
                       placeholder="00:00 или 6000"
-                      className="w-full bg-surface-subtle border border-border rounded-md px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-sereja"
+                      className="w-full bg-surface-muted rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-black focus:outline-none"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-lera-text">Лера:</label>
+                    <label className="text-[11px] font-bold text-text-black">Лера:</label>
                     <input
                       type="text"
                       value={targetLera}
                       onChange={(e) => setTargetLera(e.target.value)}
                       placeholder="23:30 или 6000"
-                      className="w-full bg-surface-subtle border border-border rounded-md px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-lera"
+                      className="w-full bg-surface-muted rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-black focus:outline-none"
                     />
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-1.5 bg-text-primary hover:bg-black text-white text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5"
+              className="w-full py-2.5 bg-card-dark hover:bg-black text-white text-xs font-bold rounded-2xl transition flex items-center justify-center gap-1.5 shadow-sm"
             >
               <Check className="w-3.5 h-3.5" />
               {editingId ? 'Сохранить' : 'Создать'}
@@ -254,16 +254,16 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
         )}
 
         {/* Existing List */}
-        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
           {currentList.map((item) => (
             <div
               key={item.id}
-              className="p-2.5 bg-white border border-border rounded-lg flex items-center justify-between gap-2"
+              className="p-3 bg-surface-muted rounded-2xl flex items-center justify-between gap-2"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-text-primary truncate">{item.title}</p>
+                <p className="text-xs font-bold text-text-black truncate">{item.title}</p>
                 {item.category === 'active' && (
-                  <p className="text-[11px] text-text-secondary mt-0.5">
+                  <p className="text-[11px] font-medium text-text-muted mt-0.5">
                     Серёжа: {item.target_sereja} {item.unit} • Лера: {item.target_lera} {item.unit}
                   </p>
                 )}
@@ -272,14 +272,14 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => startEdit(item)}
-                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-surface-hover transition"
+                  className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-text-black hover:bg-surface-subtle transition"
                   title="Редактировать"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="p-1 rounded text-danger hover:text-red-700 hover:bg-red-50 transition"
+                  className="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-danger hover:bg-danger-subtle transition"
                   title="Удалить"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

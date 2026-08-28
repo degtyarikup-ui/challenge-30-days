@@ -39,13 +39,13 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-white border border-border w-full max-w-lg rounded-2xl p-5 shadow-xl space-y-3.5 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-text-secondary" />
-            <h3 className="text-base font-semibold text-text-primary">
+            <Calendar className="w-5 h-5 text-text-black" />
+            <h3 className="text-lg font-black text-text-black">
               История по дням
             </h3>
           </div>
@@ -54,18 +54,18 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
               triggerHaptic('light');
               onClose();
             }}
-            className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-hover transition"
+            className="w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-black hover:bg-surface-subtle transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* History list */}
-        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
           {loading ? (
-            <div className="py-8 text-center text-text-secondary flex flex-col items-center gap-1.5">
-              <RefreshCw className="w-4 h-4 animate-spin text-text-muted" />
-              <span className="text-xs">Загрузка...</span>
+            <div className="py-8 text-center text-text-muted flex flex-col items-center gap-1.5">
+              <RefreshCw className="w-5 h-5 animate-spin" />
+              <span className="text-xs font-semibold">Загрузка...</span>
             </div>
           ) : history.length > 0 ? (
             history.map((day) => {
@@ -77,31 +77,31 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
                     onSelectDate(day.date);
                     onClose();
                   }}
-                  className="p-3 bg-white border border-border hover:bg-surface-subtle rounded-lg flex items-center justify-between gap-3 cursor-pointer transition"
+                  className="p-4 bg-surface-muted hover:bg-surface-subtle rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition active:scale-98"
                 >
-                  <div className="space-y-0.5">
-                    <span className="text-xs sm:text-sm font-medium text-text-primary">{day.date}</span>
+                  <div>
+                    <span className="text-sm font-bold text-text-black">{day.date}</span>
                   </div>
 
                   <div className="flex items-center gap-2 text-xs">
                     {/* Sereja status */}
-                    <span className="text-sereja-text bg-sereja-light border border-sereja-border px-2 py-0.5 rounded font-medium">
+                    <span className="bg-white text-text-black px-3 py-1 rounded-full font-bold shadow-xs">
                       Серёжа: {day.serejaCompleted}/{day.serejaTotal}
-                      {day.serejaViolations > 0 && <span className="ml-1 text-danger">●</span>}
+                      {day.serejaViolations > 0 && <span className="ml-1 text-danger">⚠️</span>}
                     </span>
 
                     {/* Lera status */}
-                    <span className="text-lera-text bg-lera-light border border-lera-border px-2 py-0.5 rounded font-medium">
+                    <span className="bg-white text-text-black px-3 py-1 rounded-full font-bold shadow-xs">
                       Лера: {day.leraCompleted}/{day.leraTotal}
-                      {day.leraViolations > 0 && <span className="ml-1 text-danger">●</span>}
+                      {day.leraViolations > 0 && <span className="ml-1 text-danger">⚠️</span>}
                     </span>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="py-8 text-center text-text-secondary space-y-1">
-              <p className="text-xs">История пока пуста.</p>
+            <div className="py-8 text-center text-text-muted space-y-1">
+              <p className="text-xs font-semibold">История пока пуста.</p>
             </div>
           )}
         </div>

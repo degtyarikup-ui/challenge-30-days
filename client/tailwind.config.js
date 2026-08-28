@@ -8,38 +8,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#ffffff',
-        surface: '#fafaf9',
-        'surface-subtle': '#f7f7f5',
-        'surface-hover': '#f1f1ef',
-        border: '#e7e7e4',
-        'border-strong': '#d4d4d0',
-        'text-primary': '#2f2f2f',
-        'text-secondary': '#73726e',
-        'text-muted': '#9b9a97',
-        sereja: {
-          DEFAULT: '#2563eb',
-          light: '#eff6ff',
-          border: '#bfdbfe',
-          text: '#1d4ed8',
-        },
-        lera: {
-          DEFAULT: '#db2777',
-          light: '#fdf2f8',
-          border: '#fbcfe8',
-          text: '#be185d',
+        background: '#F4F5F8',
+        card: '#FFFFFF',
+        'card-dark': '#18191E',
+        'card-dark-hover': '#22242B',
+        'surface-subtle': '#EAECF0',
+        'surface-muted': '#F0F2F5',
+        'text-black': '#0F1015',
+        'text-dark': '#2B2C34',
+        'text-muted': '#787A85',
+        lime: {
+          DEFAULT: '#D2FF00',
+          hover: '#C2ED00',
+          subtle: '#F4FFC2',
+          glow: 'rgba(210, 255, 0, 0.4)',
         },
         danger: {
-          DEFAULT: '#dc2626',
-          light: '#fef2f2',
-          border: '#fecaca',
-          text: '#b91c1c',
+          DEFAULT: '#FF3B30',
+          subtle: '#FFEBEA',
         }
       },
       fontFamily: {
         sans: [
           '-apple-system',
           'BlinkMacSystemFont',
+          '"SF Pro Display"',
           '"Segoe UI"',
           'Roboto',
           'Helvetica',
@@ -47,6 +40,16 @@ export default {
           'sans-serif'
         ],
       },
+      boxShadow: {
+        'card': '0 2px 12px -2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03)',
+        'card-elevated': '0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04)',
+        'lime': '0 8px 25px -4px rgba(210, 255, 0, 0.5)',
+        'dark': '0 10px 25px -5px rgba(24, 25, 30, 0.3)',
+      },
+      borderRadius: {
+        '3xl': '24px',
+        '4xl': '32px',
+      }
     },
   },
   plugins: [],
