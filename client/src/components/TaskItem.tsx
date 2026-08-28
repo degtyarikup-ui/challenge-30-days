@@ -5,6 +5,21 @@ import { triggerHaptic } from '../utils/telegram';
 import { playToggleOnSound, playToggleOffSound } from '../utils/audio';
 import { renderHabitIcon } from '../utils/icons';
 
+const MICRO_COLORS = ['#D4FF00', '#00F0FF', '#FF007A', '#FFE600', '#FFFFFF', '#7B2CBF'];
+
+const SPARKS = [
+  { id: 1, x: 22, y: -24, rot: 120, scale: 0.9, color: MICRO_COLORS[0], shape: 'circle' },
+  { id: 2, x: -26, y: -20, rot: -140, scale: 1.0, color: MICRO_COLORS[1], shape: 'rect' },
+  { id: 3, x: 30, y: 16, rot: 190, scale: 0.85, color: MICRO_COLORS[2], shape: 'diamond' },
+  { id: 4, x: -28, y: 22, rot: -160, scale: 0.9, color: MICRO_COLORS[3], shape: 'circle' },
+  { id: 5, x: 0, y: -34, rot: 45, scale: 1.1, color: MICRO_COLORS[4], shape: 'rect' },
+  { id: 6, x: 0, y: 32, rot: -80, scale: 0.8, color: MICRO_COLORS[0], shape: 'diamond' },
+  { id: 7, x: 34, y: -8, rot: 160, scale: 0.95, color: MICRO_COLORS[1], shape: 'circle' },
+  { id: 8, x: -36, y: -4, rot: -120, scale: 1.0, color: MICRO_COLORS[2], shape: 'rect' },
+  { id: 9, x: 18, y: 30, rot: 90, scale: 0.8, color: MICRO_COLORS[3], shape: 'circle' },
+  { id: 10, x: -18, y: -30, rot: -90, scale: 0.85, color: MICRO_COLORS[4], shape: 'diamond' },
+];
+
 interface TaskItemProps {
   habit: HabitWithStatus;
   currentUserId: UserId;
@@ -73,7 +88,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       playToggleOnSound();
       triggerHaptic('success');
       setJustCompleted(true);
-      setTimeout(() => setJustCompleted(false), 500);
+      setTimeout(() => setJustCompleted(false), 550);
     } else {
       playToggleOffSound();
       triggerHaptic('light');
@@ -100,7 +115,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         triggerHaptic('heavy');
         onContextMenu(habit);
       }}
-      className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-200 ease-out cursor-pointer select-none active:scale-[0.98] ${
+      className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-200 ease-out cursor-pointer select-none active:scale-[0.98] relative overflow-visible ${
         justCompleted ? 'animate-card-bounce' : ''
       } ${
         isMyDone
@@ -153,12 +168,41 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Partner Done Badge + Custom Switch */}
-        <div className="flex items-center gap-2.5 flex-shrink-0">
+        {/* Right Side: Partner Done Badge + Custom Switch + Micro Confetti */}
+        <div className="flex items-center gap-2.5 flex-shrink-0 relative">
+          {/* Micro Confetti Sparks on completion */}
+          {justCompleted && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+              {SPARKS.map((s) => (
+                <div
+                  key={s.id}
+                  className="absolute"
+                  style={{
+                    ['--mx' as any]: `${s.x}px`,
+                    ['--my' as any]: `${s.y}px`,
+                    ['--mrot' as any]: `${s.rot}deg`,
+                    ['--msc' as any]: s.scale,
+                    animation: 'micro-spark 0.5s cubic-bezier(0.12, 0.8, 0.33, 1) forwards',
+                  }}
+                >
+                  {s.shape === 'circle' && (
+                    <div className="w-1.5 h-1.5 rounded-full shadow-xs" style={{ backgroundColor: s.color }} />
+                  )}
+                  {s.shape === 'rect' && (
+                    <div className="w-2 h-1 rounded-xs shadow-xs" style={{ backgroundColor: s.color }} />
+                  )}
+                  {s.shape === 'diamond' && (
+                    <div className="w-1.5 h-1.5 rotate-45 shadow-xs" style={{ backgroundColor: s.color }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Partner Done Badge (with Avatar & Checkmark) */}
           {isBoth && isPartnerDone && (
             <div
-              className={`pl-1 pr-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
+              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
                 isMyDone
                   ? 'bg-white text-black shadow-xs'
                   : 'bg-card-dark text-lime shadow-xs'
