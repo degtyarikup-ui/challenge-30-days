@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Flame } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
-import { clearCelebrationConfetti } from '../utils/confetti';
+import { ConfettiExplosion } from './ConfettiExplosion';
 
 interface FullScreenCelebrationProps {
   isOpen: boolean;
@@ -47,19 +47,12 @@ export const FullScreenCelebration: React.FC<FullScreenCelebrationProps> = ({
   onClose,
   dayNumber = 1,
 }) => {
-  useEffect(() => {
-    return () => {
-      clearCelebrationConfetti();
-    };
-  }, []);
-
   if (!isOpen) return null;
 
   const quoteIndex = Math.max(0, Math.min(dayNumber - 1, MOTIVATION_QUOTES.length - 1));
   const motivationalQuote = MOTIVATION_QUOTES[quoteIndex] || MOTIVATION_QUOTES[0];
 
   const handleDismiss = () => {
-    clearCelebrationConfetti();
     triggerHaptic('medium');
     onClose();
   };
@@ -67,11 +60,14 @@ export const FullScreenCelebration: React.FC<FullScreenCelebrationProps> = ({
   return (
     <div
       onClick={handleDismiss}
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-in fade-in duration-300 select-none cursor-pointer"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-in fade-in duration-300 select-none cursor-pointer overflow-hidden"
     >
+      {/* Self-cleaning, GPU-accelerated Confetti Explosion */}
+      <ConfettiExplosion />
+
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm text-center space-y-7 flex flex-col items-center animate-in zoom-in-95 duration-300"
+        className="relative z-20 w-full max-w-sm text-center space-y-7 flex flex-col items-center animate-in zoom-in-95 duration-300"
       >
         {/* Standalone Glowing Swaying Flame - No plate/card behind */}
         <div className="relative flex items-center justify-center py-4">

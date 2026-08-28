@@ -63,6 +63,74 @@
   animation: card-complete-bounce 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+@keyframes confetti-fall-0 {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tw-translate-x, 140px), var(--tw-translate-y, 220px), 0) scale(1) rotate(380deg);
+  }
+}
+
+@keyframes confetti-fall-1 {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tw-translate-x, -160px), var(--tw-translate-y, 240px), 0) scale(1) rotate(-420deg);
+  }
+}
+
+@keyframes confetti-fall-2 {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tw-translate-x, 180px), var(--tw-translate-y, -140px), 0) scale(1) rotate(290deg);
+  }
+}
+
+@keyframes confetti-fall-3 {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tw-translate-x, -190px), var(--tw-translate-y, -150px), 0) scale(1) rotate(-340deg);
+  }
+}
+
 /* Minimalist scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;

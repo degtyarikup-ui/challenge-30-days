@@ -12,7 +12,6 @@ import {
   subscribeToEvents,
 } from './api';
 import { initTelegramApp, getTelegramUser, triggerHaptic } from './utils/telegram';
-import { triggerCelebrationConfetti } from './utils/confetti';
 import { playAllDoneSound, playWarningSound } from './utils/audio';
 import { Header } from './components/Header';
 import { StreakTracker } from './components/StreakTracker';
@@ -24,7 +23,7 @@ import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
 import { TaskContextMenuModal } from './components/TaskContextMenuModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
-import { RefreshCw, User } from 'lucide-react';
+import { RefreshCw, User, Clock } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [state, setState] = useState<AppStateResponse | null>(null);
@@ -176,7 +175,6 @@ export const App: React.FC = () => {
     if (willBeAllDone) {
       setTimeout(() => {
         playAllDoneSound();
-        triggerCelebrationConfetti();
         setIsFullScreenCelebrationOpen(true);
         triggerHaptic('success');
       }, 100);
@@ -323,7 +321,56 @@ export const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-3.5 flex-1">
-        {/* Past Date indicator */}
+        {/* Morning Grace Period Switcher (00:00 - 12:00) */}
+        {state.isGracePeriod && (
+          <div className="bg-white p-1 rounded-2xl flex items-center gap-1">
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                handleDateChange(state.actualDate);
+              }}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                selectedDate === state.actualDate
+                  ? 'bg-card-dark text-white'
+                  : 'text-text-muted hover:text-text-black'
+              }`}
+            >
+              <span>Сегодня</span>
+            </button>
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                handleDateChange(state.yesterdayDate);
+              }}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                selectedDate === state.yesterdayDate
+                  ? 'bg-lime text-black'
+                  : 'text-text-muted hover:text-text-black'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Вчера (до 12:00)</span>
+            </button>
+          </div>
+        )}
+
+        {/* Yesterday Active Banner during Grace Period */}
+        {isGracePeriodActiveForPast && (
+          <div className="bg-lime text-black rounded-2xl p-3.5 text-xs font-bold flex items-center justify-between gap-2 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-black flex-shrink-0" />
+              <span>Отметки за вчера открыты до 12:00 дня</span>
+            </div>
+            <button
+              onClick={() => handleDateChange(state.actualDate)}
+              className="text-black underline font-black flex-shrink-0"
+            >
+              К сегодняшнему дню
+            </button>
+          </div>
+        )}
+
+        {/* Other Past Date Indicator */}
         {isPastDate && !isGracePeriodActiveForPast && (
           <div className="bg-white rounded-2xl p-3 text-xs font-bold text-text-black flex items-center justify-between">
             <span>Просмотр дня: {selectedDate}</span>
