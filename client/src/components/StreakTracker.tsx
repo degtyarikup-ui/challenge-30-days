@@ -20,29 +20,22 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({
 
   return (
     <div className="bg-lime text-black rounded-3xl p-5 relative overflow-hidden transition-all">
-      {/* Top Header Row with Minimal Icon */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold tracking-wider uppercase text-black/60">
-          Челлендж привычек
-        </span>
-
-        <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-black">
-          <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-        </div>
-      </div>
-
-      {/* Main Big Counter */}
-      <div className="my-3">
+      {/* Top: Large Counter & Status Icon */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl sm:text-4xl font-black tracking-tight text-black">
+          <span className="text-4xl sm:text-5xl font-black tracking-tight text-black">
             День {myUser.current_streak}
           </span>
-          <span className="text-sm font-bold text-black/60">/ 30</span>
+          <span className="text-base font-bold text-black/60">/ 30</span>
+        </div>
+
+        <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-black">
+          <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
         </div>
       </div>
 
       {/* 3 Columns Sub-stats */}
-      <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-black/10">
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-black/10">
         <div>
           <div className="text-base font-black text-black">
             {sereja.current_streak} дн.
