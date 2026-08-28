@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserId } from '../types';
-import { Calendar, SlidersHorizontal, Clock, Shield } from 'lucide-react';
+import { Calendar, SlidersHorizontal, Clock, Shield, ArrowLeftRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface HeaderProps {
@@ -14,6 +14,7 @@ interface HeaderProps {
   onOpenManageModal: () => void;
   onOpenHistoryModal: () => void;
   onOpenRulesModal: () => void;
+  onSwitchUser?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenManageModal,
   onOpenHistoryModal,
   onOpenRulesModal,
+  onSwitchUser,
 }) => {
   const isViewingYesterday = selectedDate === yesterdayDate;
   const userName = currentUserId === 'sereja' ? 'Серёжа' : 'Лера';
@@ -35,9 +37,16 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="px-4 pt-3 pb-1 sm:px-6">
       <div className="max-w-xl mx-auto flex items-center justify-between">
-        {/* User Identity with Avatar */}
+        {/* User Identity with Avatar & 1-tap switcher */}
         <div className="flex items-center gap-2">
-          <div className="bg-card-dark text-white pl-1.5 pr-3 py-1 rounded-full flex items-center gap-2">
+          <button
+            onClick={() => {
+              triggerHaptic('light');
+              onSwitchUser?.();
+            }}
+            className="bg-card-dark hover:bg-black text-white pl-1.5 pr-3 py-1 rounded-full flex items-center gap-2 transition active:scale-95 shadow-none"
+            title="Нажмите, чтобы переключить профиль (Серёжа / Лера)"
+          >
             {userAvatarUrl ? (
               <img
                 src={userAvatarUrl}
@@ -52,7 +61,8 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-xs font-bold tracking-wide">
               {userName}
             </span>
-          </div>
+            <ArrowLeftRight className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+          </button>
 
           {/* Grace Period Switch to Yesterday (if applicable) */}
           {isGracePeriod && (

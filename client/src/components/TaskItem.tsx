@@ -42,8 +42,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressRef = useRef(false);
 
-  const isSerejaDone = habit.status_sereja.completed;
-  const isLeraDone = habit.status_lera.completed;
+  const isSerejaDone = !!habit.status_sereja?.completed;
+  const isLeraDone = !!habit.status_lera?.completed;
 
   const isMyDone = currentUserId === 'sereja' ? isSerejaDone : isLeraDone;
   const isPartnerDone = currentUserId === 'sereja' ? isLeraDone : isSerejaDone;
@@ -150,7 +150,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               )}
             </div>
 
-            <div className="text-xs font-semibold mt-0.5">
+            <div className="text-xs font-semibold mt-0.5 flex items-center flex-wrap gap-x-2 gap-y-0.5">
               {hasDistinctTargets ? (
                 <span className={isMyDone ? 'text-white/70' : 'text-text-muted'}>
                   Цель: <b className={isMyDone ? 'text-lime' : 'text-text-black'}>{myTarget} {habit.unit}</b>
@@ -169,7 +169,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </div>
 
         {/* Right Side: Partner Done Badge + Custom Switch + Micro Confetti */}
-        <div className="flex items-center gap-2.5 flex-shrink-0 relative">
+        <div className="flex items-center gap-2 flex-shrink-0 relative">
           {/* Micro Confetti Sparks on completion */}
           {justCompleted && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
@@ -202,11 +202,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           {/* Partner Done Badge (with Avatar & Checkmark) */}
           {isBoth && isPartnerDone && (
             <div
-              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
+              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
                 isMyDone
-                  ? 'bg-white text-black shadow-xs'
-                  : 'bg-card-dark text-lime shadow-xs'
+                  ? 'bg-white text-black'
+                  : 'bg-card-dark text-lime border border-lime/30'
               }`}
+              title={`${partnerName} выполнил(а) цель`}
             >
               {partnerAvatarUrl ? (
                 <img

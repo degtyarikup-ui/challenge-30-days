@@ -1,7 +1,7 @@
 import { AppStateResponse, Habit, HistoryDay, UserId, HabitWithStatus, Violation, User } from './types';
 
 const API_BASE = '/api';
-const CLOUD_SYNC_URL = 'https://kvdb.io/A8oRkW68bL5g2917hP9s1w/challenge_state_30d_v1';
+const CLOUD_SYNC_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b11001a04a3f6b575799';
 
 // Initial Mock / Local Storage Data for GitHub Pages
 const DEFAULT_HABITS: Habit[] = [
@@ -20,15 +20,6 @@ const DEFAULT_HABITS: Habit[] = [
   { id: 18, title: 'Без сигарет', category: 'passive', target_type: 'checkbox', target_sereja: '', target_lera: '', unit: '', is_active: 1, order_index: 18, created_at: '' },
 ];
 
-interface CloudPayload {
-  logs: Record<string, boolean>;
-  habits?: Habit[];
-  violations?: Violation[];
-  startDate?: string;
-  users?: Record<UserId, User>;
-  lastUpdated: number;
-}
-
 // Push local data to Cloud
 async function pushToCloud() {
   try {
@@ -38,17 +29,20 @@ async function pushToCloud() {
     const startDate = localStorage.getItem('challenge_start_date') || '2026-08-31';
     const users = JSON.parse(localStorage.getItem('challenge_users') || 'null');
 
-    const payload: CloudPayload = {
-      logs,
-      habits: habits || undefined,
-      violations: violations || undefined,
-      startDate,
-      users: users || undefined,
-      lastUpdated: Date.now(),
+    const payload = {
+      name: 'challenge_state',
+      data: {
+        logs,
+        habits: habits || undefined,
+        violations: violations || undefined,
+        startDate,
+        users: users || undefined,
+        lastUpdated: Date.now(),
+      }
     };
 
     await fetch(CLOUD_SYNC_URL, {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
@@ -62,7 +56,8 @@ async function pullFromCloud() {
   try {
     const res = await fetch(CLOUD_SYNC_URL);
     if (res.ok) {
-      const data: CloudPayload = await res.json();
+      const resp = await res.json();
+      const data = resp.data;
       if (data && data.logs) {
         const localLogs = JSON.parse(localStorage.getItem('challenge_logs') || '{}');
         const mergedLogs = { ...localLogs, ...data.logs };
@@ -406,11 +401,11 @@ export function subscribeToEvents(onEvent: (event: any) => void): () => void {
       eventSource.close();
     };
   } catch (e) {
-    // Background polling interval for GitHub Pages
+    // Background live cloud sync polling interval for GitHub Pages (every 2.5s)
     const interval = setInterval(async () => {
       await pullFromCloud();
       onEvent({ type: 'cloud_sync' });
-    }, 4000);
+    }, 2500);
 
     return () => {
       clearInterval(interval);

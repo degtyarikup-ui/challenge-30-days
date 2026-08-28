@@ -321,6 +321,7 @@ export const App: React.FC = () => {
         yesterdayDate={state.yesterdayDate}
         isGracePeriod={state.isGracePeriod}
         onSelectDate={handleDateChange}
+        onSwitchUser={() => handleSelectInitialUser(partnerId)}
         onOpenManageModal={() => {
           setInitialEditingHabit(null);
           setIsManageModalOpen(true);
