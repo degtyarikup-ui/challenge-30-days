@@ -3,6 +3,7 @@ import { HabitWithStatus, UserId } from '../types';
 import { Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 import { playToggleOnSound, playToggleOffSound } from '../utils/audio';
+import { triggerMicroConfetti } from '../utils/confetti';
 import { renderHabitIcon } from '../utils/icons';
 
 interface TaskItemProps {
@@ -21,6 +22,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   disabled = false,
 }) => {
   const [isPending, setIsPending] = useState(false);
+  const [justCompleted, setJustCompleted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLongPressRef = useRef(false);
 
@@ -64,10 +66,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
     setIsPending(true);
 
-    // Audio & Haptic
+    // Audio & Haptic & Micro-confetti burst
     if (!isMyDone) {
       playToggleOnSound();
       triggerHaptic('success');
+      triggerMicroConfetti(e.clientX, e.clientY);
+      setJustCompleted(true);
+      setTimeout(() => setJustCompleted(false), 500);
     } else {
       playToggleOffSound();
       triggerHaptic('light');
@@ -95,6 +100,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         onContextMenu(habit);
       }}
       className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-200 ease-out cursor-pointer select-none active:scale-[0.98] ${
+        justCompleted ? 'animate-card-bounce' : ''
+      } ${
         isMyDone
           ? 'bg-card-dark text-white'
           : 'bg-white text-text-black hover:bg-white/90'
@@ -104,7 +111,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         {/* Left Side: Icon & Title & Targets */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <div
-            className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-200 ${
+            className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+              justCompleted ? 'animate-spring-pop' : ''
+            } ${
               isMyDone ? 'bg-white/10' : 'bg-surface-muted'
             }`}
           >
