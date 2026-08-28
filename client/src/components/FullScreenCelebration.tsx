@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Flame } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
+import { clearCelebrationConfetti } from '../utils/confetti';
 
 interface FullScreenCelebrationProps {
   isOpen: boolean;
@@ -46,17 +47,26 @@ export const FullScreenCelebration: React.FC<FullScreenCelebrationProps> = ({
   onClose,
   dayNumber = 1,
 }) => {
+  useEffect(() => {
+    return () => {
+      clearCelebrationConfetti();
+    };
+  }, []);
+
   if (!isOpen) return null;
 
   const quoteIndex = Math.max(0, Math.min(dayNumber - 1, MOTIVATION_QUOTES.length - 1));
   const motivationalQuote = MOTIVATION_QUOTES[quoteIndex] || MOTIVATION_QUOTES[0];
 
+  const handleDismiss = () => {
+    clearCelebrationConfetti();
+    triggerHaptic('medium');
+    onClose();
+  };
+
   return (
     <div
-      onClick={() => {
-        triggerHaptic('light');
-        onClose();
-      }}
+      onClick={handleDismiss}
       className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-md animate-in fade-in duration-300 select-none cursor-pointer"
     >
       <div
@@ -80,10 +90,7 @@ export const FullScreenCelebration: React.FC<FullScreenCelebrationProps> = ({
 
         {/* Button - Pure text only, no icons, no emojis */}
         <button
-          onClick={() => {
-            triggerHaptic('medium');
-            onClose();
-          }}
+          onClick={handleDismiss}
           className="w-full py-4 bg-lime hover:bg-lime/90 text-black text-sm font-black rounded-2xl transition active:scale-95 shadow-none"
         >
           Продолжить

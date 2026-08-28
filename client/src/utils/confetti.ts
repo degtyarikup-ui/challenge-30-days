@@ -1,68 +1,81 @@
 import confetti from 'canvas-confetti';
 
-// Ultra-vibrant electric neon color palette
 const VIBRANT_PALETTE = [
   '#D4FF00', // Electric Lime
   '#00F0FF', // Neon Cyan
   '#FF007A', // Hot Magenta
   '#FFE600', // Bright Gold
   '#7B2CBF', // Electric Purple
-  '#FF5400', // Vivid Orange
   '#FFFFFF', // Bright White
 ];
 
-// 1. Full-screen spectacular multi-phase celebration fireworks
+let celebrationTimeoutId1: ReturnType<typeof setTimeout> | null = null;
+let celebrationTimeoutId2: ReturnType<typeof setTimeout> | null = null;
+
+// Clean up all confetti and remove hanging canvases
+export function clearCelebrationConfetti() {
+  if (celebrationTimeoutId1) {
+    clearTimeout(celebrationTimeoutId1);
+    celebrationTimeoutId1 = null;
+  }
+  if (celebrationTimeoutId2) {
+    clearTimeout(celebrationTimeoutId2);
+    celebrationTimeoutId2 = null;
+  }
+  try {
+    confetti.reset();
+  } catch (e) {
+    // Ignore reset error
+  }
+}
+
+// 1. Full-screen celebration fireworks with guaranteed auto-fadeout
 export function triggerCelebrationConfetti() {
-  // Phase 1: Dual side cannons
+  clearCelebrationConfetti();
+
+  // Phase 1: Dual side burst
   confetti({
-    particleCount: 80,
+    particleCount: 50,
     angle: 60,
-    spread: 75,
-    origin: { x: 0, y: 0.7 },
+    spread: 65,
+    origin: { x: 0.05, y: 0.7 },
     colors: VIBRANT_PALETTE,
-    ticks: 350,
-    gravity: 1.0,
-    scalar: 1.2,
+    ticks: 140, // ~2.3 seconds max
+    decay: 0.91, // Fast smooth fade-out
+    gravity: 1.2,
+    scalar: 1.1,
   });
 
   confetti({
-    particleCount: 80,
+    particleCount: 50,
     angle: 120,
-    spread: 75,
-    origin: { x: 1, y: 0.7 },
+    spread: 65,
+    origin: { x: 0.95, y: 0.7 },
     colors: VIBRANT_PALETTE,
-    ticks: 350,
-    gravity: 1.0,
-    scalar: 1.2,
+    ticks: 140,
+    decay: 0.91,
+    gravity: 1.2,
+    scalar: 1.1,
   });
 
-  // Phase 2: High center power starburst
-  setTimeout(() => {
-    confetti({
-      particleCount: 110,
-      spread: 140,
-      origin: { x: 0.5, y: 0.35 },
-      colors: VIBRANT_PALETTE,
-      ticks: 400,
-      gravity: 0.85,
-      scalar: 1.3,
-      shapes: ['circle', 'square'],
-    });
-  }, 200);
-
-  // Phase 3: Secondary cascading rain
-  setTimeout(() => {
+  // Phase 2: High center power burst (short delay)
+  celebrationTimeoutId1 = setTimeout(() => {
     confetti({
       particleCount: 70,
-      angle: 90,
-      spread: 120,
-      origin: { x: 0.5, y: 0.5 },
+      spread: 100,
+      origin: { x: 0.5, y: 0.4 },
       colors: VIBRANT_PALETTE,
-      ticks: 350,
-      gravity: 0.95,
-      scalar: 1.15,
+      ticks: 150,
+      decay: 0.9,
+      gravity: 1.1,
+      scalar: 1.2,
     });
-  }, 400);
+  }, 180);
+
+  // Auto-cleanup guarantee after 3 seconds
+  celebrationTimeoutId2 = setTimeout(() => {
+    clearCelebrationConfetti();
+  }, 3000);
 }
 
 // 2. Playful micro-burst at target click coordinates (per-habit completion)
@@ -72,16 +85,17 @@ export function triggerMicroConfetti(clientX?: number, clientY?: number) {
     const y = clientY !== undefined ? clientY / window.innerHeight : 0.5;
 
     confetti({
-      particleCount: 22,
-      spread: 60,
+      particleCount: 16,
+      spread: 50,
       origin: { x, y },
       colors: ['#D4FF00', '#00F0FF', '#FF007A', '#FFE600', '#FFFFFF'],
-      ticks: 120,
-      gravity: 1.4,
-      scalar: 0.85,
+      ticks: 80, // ~1.3 seconds
+      decay: 0.88, // Quick disappear
+      gravity: 1.5,
+      scalar: 0.8,
       disableForReducedMotion: true,
     });
   } catch (e) {
-    // Confetti fallback
+    // Fallback
   }
 }
