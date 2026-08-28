@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Habit, HabitCategory, TargetType } from '../types';
-import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal, CalendarDays } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface ManageTasksModalProps {
@@ -8,9 +8,11 @@ interface ManageTasksModalProps {
   onClose: () => void;
   habits: Habit[];
   passiveRules: Habit[];
+  startDate: string;
   onCreateHabit: (habit: Partial<Habit>) => Promise<void>;
   onUpdateHabit: (id: number, habit: Partial<Habit>) => Promise<void>;
   onDeleteHabit: (id: number) => Promise<void>;
+  onUpdateStartDate: (date: string) => Promise<void>;
 }
 
 export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
@@ -18,9 +20,11 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   onClose,
   habits,
   passiveRules,
+  startDate,
   onCreateHabit,
   onUpdateHabit,
   onDeleteHabit,
+  onUpdateStartDate,
 }) => {
   const [activeTab, setActiveTab] = useState<HabitCategory>('active');
   const [isCreating, setIsCreating] = useState(false);
@@ -33,6 +37,10 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   const [targetLera, setTargetLera] = useState('');
   const [unit, setUnit] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Start Date state
+  const [selectedStartDate, setSelectedStartDate] = useState(startDate || '2026-08-31');
+  const [isSavingStartDate, setIsSavingStartDate] = useState(false);
 
   if (!isOpen) return null;
 
@@ -95,6 +103,19 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
     if (confirm('Удалить эту цель?')) {
       triggerHaptic('warning');
       await onDeleteHabit(id);
+    }
+  };
+
+  const handleSaveStartDate = async () => {
+    if (!selectedStartDate) return;
+    setIsSavingStartDate(true);
+    try {
+      await onUpdateStartDate(selectedStartDate);
+      triggerHaptic('success');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingStartDate(false);
     }
   };
 
@@ -287,6 +308,35 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Subtle Start Date Setting Section */}
+        <div className="pt-3 border-t border-surface-subtle flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-text-muted" />
+            <div>
+              <span className="text-xs font-bold text-text-black block">Начало челленджа:</span>
+              <span className="text-[10px] font-medium text-text-muted">Дата первого дня</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <input
+              type="date"
+              value={selectedStartDate}
+              onChange={(e) => setSelectedStartDate(e.target.value)}
+              className="bg-surface-muted px-2.5 py-1.5 rounded-xl text-xs font-bold text-text-black focus:outline-none"
+            />
+            {selectedStartDate !== startDate && (
+              <button
+                onClick={handleSaveStartDate}
+                disabled={isSavingStartDate}
+                className="px-3 py-1.5 bg-lime text-black font-bold text-xs rounded-xl shadow-xs active:scale-95 transition"
+              >
+                {isSavingStartDate ? '...' : 'Ок'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

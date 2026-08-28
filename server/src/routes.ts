@@ -3,6 +3,8 @@ import {
   db,
   getUsers,
   getUser,
+  getStartDate,
+  setStartDate,
   getHabitsWithStatus,
   toggleHabitLog,
   recordViolation,
@@ -67,6 +69,13 @@ apiRouter.get('/state', (req: Request, res: Response) => {
   const selectedDate = dateInfo.targetDate;
 
   const users = getUsers();
+  const startDate = getStartDate();
+
+  // Calculate days until start or current day index
+  const todayMs = new Date(dateInfo.actualDate).getTime();
+  const startMs = new Date(startDate).getTime();
+  const diffDays = Math.round((startMs - todayMs) / (1000 * 60 * 60 * 24));
+
   const { activeHabits, passiveRules } = getHabitsWithStatus(selectedDate);
   const violations = getViolations(selectedDate);
   const recentViolations = getViolations();
@@ -81,6 +90,8 @@ apiRouter.get('/state', (req: Request, res: Response) => {
     yesterdayDate: dateInfo.yesterdayDate,
     isGracePeriod: dateInfo.isGracePeriod,
     gracePeriodDeadline: dateInfo.gracePeriodDeadline,
+    startDate,
+    daysUntilStart: diffDays,
     habits: activeHabits,
     passiveRules,
     violations,
@@ -94,7 +105,19 @@ apiRouter.get('/state', (req: Request, res: Response) => {
   });
 });
 
-// 2. Toggle / Check habit (enforcing user restriction)
+// 2. Update Start Date (Manual Setting)
+apiRouter.post('/settings/start-date', (req: Request, res: Response) => {
+  const { startDate } = req.body as { startDate: string };
+  if (!startDate) {
+    return res.status(400).json({ error: 'Missing startDate' });
+  }
+
+  setStartDate(startDate);
+  sseManager.broadcast('state_updated', { type: 'start_date_updated', startDate });
+  res.json({ success: true, startDate });
+});
+
+// 3. Toggle / Check habit (enforcing user restriction)
 apiRouter.post('/check', (req: Request, res: Response) => {
   const { habitId, userId, date, completed, value } = req.body as {
     habitId: number;
@@ -134,7 +157,7 @@ apiRouter.post('/check', (req: Request, res: Response) => {
   res.json({ success: true, allDone });
 });
 
-// 3. Record Violation / Reset Streak
+// 4. Record Violation / Reset Streak
 apiRouter.post('/violation', (req: Request, res: Response) => {
   const { userId, date, ruleTitle, note } = req.body as {
     userId: UserId;
@@ -164,7 +187,7 @@ apiRouter.post('/violation', (req: Request, res: Response) => {
   res.json({ success: true, message: 'Срыв зафиксирован, стрик сброшен на День 1' });
 });
 
-// 4. Link Telegram ID
+// 5. Link Telegram ID
 apiRouter.post('/link-telegram', (req: Request, res: Response) => {
   const { userId, telegramId } = req.body as { userId: UserId; telegramId: string };
   if (!userId || !telegramId) {
@@ -174,7 +197,7 @@ apiRouter.post('/link-telegram', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// 5. Habits CRUD
+// 6. Habits CRUD
 apiRouter.post('/habits', (req: Request, res: Response) => {
   const { title, category, target_type, target_sereja, target_lera, unit } = req.body as Habit;
   if (!title || !category) {
@@ -229,13 +252,13 @@ apiRouter.delete('/habits/:id', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// 6. History for Calendar
+// 7. History for Calendar
 apiRouter.get('/history', (_req: Request, res: Response) => {
   const history = getHistoryDays();
   res.json(history);
 });
 
-// 7. Manual update streak / reset
+// 8. Manual update streak / reset
 apiRouter.post('/user/reset', (req: Request, res: Response) => {
   const { userId } = req.body as { userId: UserId };
   if (!userId) return res.status(400).json({ error: 'Missing userId' });
@@ -252,7 +275,7 @@ apiRouter.post('/user/set-streak', (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
-// 8. SSE Events Stream
+// 9. SSE Events Stream
 apiRouter.get('/events', (req: Request, res: Response) => {
   const clientId = sseManager.addClient(res);
   req.on('close', () => {
@@ -260,7 +283,7 @@ apiRouter.get('/events', (req: Request, res: Response) => {
   });
 });
 
-// 9. Manual trigger for testing evaluation
+// 10. Manual trigger for testing evaluation
 apiRouter.post('/cron/evaluate-now', (_req: Request, res: Response) => {
   evaluateYesterdayResults();
   res.json({ success: true, message: 'Grace period evaluation executed' });

@@ -33,7 +33,15 @@ export function initDatabase() {
     );
   `);
 
-  // 2. Habits table
+  // 2. Settings table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
+
+  // 3. Habits table
   db.exec(`
     CREATE TABLE IF NOT EXISTS habits (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -49,7 +57,7 @@ export function initDatabase() {
     );
   `);
 
-  // 3. Habit logs table (date stored as YYYY-MM-DD)
+  // 4. Habit logs table (date stored as YYYY-MM-DD)
   db.exec(`
     CREATE TABLE IF NOT EXISTS habit_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +73,7 @@ export function initDatabase() {
     );
   `);
 
-  // 4. Violations table (logs any resets/slips)
+  // 5. Violations table (logs any resets/slips)
   db.exec(`
     CREATE TABLE IF NOT EXISTS violations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,7 +86,7 @@ export function initDatabase() {
     );
   `);
 
-  // 5. Daily summaries
+  // 6. Daily summaries
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_summaries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,17 +100,24 @@ export function initDatabase() {
     );
   `);
 
+  // Seed default start date (Coming Monday: 2026-08-31)
+  const defaultStartDate = '2026-08-31';
+  db.prepare(`
+    INSERT INTO settings (key, value)
+    VALUES ('start_date', ?)
+    ON CONFLICT(key) DO NOTHING
+  `).run(defaultStartDate);
+
   // Seed default users if not exists
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
   if (userCount.count === 0) {
-    const today = new Date().toISOString().split('T')[0];
     const insertUser = db.prepare(`
       INSERT INTO users (id, name, telegram_id, current_streak, max_streak, challenge_start_date, avatar_color)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    insertUser.run('sereja', 'Серёжа', null, 1, 1, today, '#3B82F6');
-    insertUser.run('lera', 'Лера', null, 1, 1, today, '#EC4899');
+    insertUser.run('sereja', 'Серёжа', null, 1, 1, defaultStartDate, '#D2FF00');
+    insertUser.run('lera', 'Лера', null, 1, 1, defaultStartDate, '#D2FF00');
   }
 
   // Seed default habits and rules if empty
@@ -130,6 +145,21 @@ export function initDatabase() {
     insertHabit.run('Без алкоголя', 'passive', 'checkbox', '', '', '', 17);
     insertHabit.run('Без сигарет', 'passive', 'checkbox', '', '', '', 18);
   }
+}
+
+export function getStartDate(): string {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'start_date'").get() as { value: string } | undefined;
+  return row?.value || '2026-08-31';
+}
+
+export function setStartDate(startDate: string) {
+  db.prepare(`
+    INSERT INTO settings (key, value)
+    VALUES ('start_date', ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(startDate);
+
+  db.prepare('UPDATE users SET challenge_start_date = ?').run(startDate);
 }
 
 export function getUsers(): Record<UserId, User> {
@@ -235,7 +265,6 @@ export function getHistoryDays(): Array<{
   serejaViolations: number;
   leraViolations: number;
 }> {
-  // Aggregate history for calendar
   const activeHabitsCount = (db.prepare("SELECT COUNT(*) as count FROM habits WHERE category = 'active' AND is_active = 1").get() as { count: number }).count;
   
   const datesRows = db.prepare(`

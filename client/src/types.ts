@@ -55,6 +55,8 @@ export interface AppStateResponse {
   yesterdayDate: string;
   isGracePeriod: boolean;
   gracePeriodDeadline: string;
+  startDate: string;
+  daysUntilStart: number;
   habits: HabitWithStatus[];
   passiveRules: Habit[];
   violations: Violation[];

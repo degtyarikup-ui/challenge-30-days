@@ -28,6 +28,18 @@ export async function fetchAppState(date?: string): Promise<AppStateResponse> {
   return res.json();
 }
 
+export async function updateStartDateApi(startDate: string): Promise<{ success: boolean; startDate: string }> {
+  const res = await fetch(`${API_BASE}/settings/start-date`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ startDate }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update start date');
+  }
+  return res.json();
+}
+
 export async function toggleHabitApi(
   habitId: number,
   userId: UserId,

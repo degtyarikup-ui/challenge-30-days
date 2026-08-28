@@ -61,9 +61,13 @@ export interface HabitWithStatus extends Habit {
 
 export interface AppStateResponse {
   users: Record<UserId, User>;
-  date: string; // Current challenge logical date
-  actualDate: string; // Real calendar date
-  isGracePeriod: boolean; // True between 00:00 and 12:00 next day for previous day
+  date: string;
+  actualDate: string;
+  yesterdayDate: string;
+  isGracePeriod: boolean;
+  gracePeriodDeadline: string;
+  startDate: string;
+  daysUntilStart: number;
   habits: HabitWithStatus[];
   passiveRules: Habit[];
   violations: Violation[];

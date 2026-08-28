@@ -1,17 +1,26 @@
 import React from 'react';
 import { User, UserId } from '../types';
-import { Flame, CheckCircle2 } from 'lucide-react';
+import { Flame, CheckCircle2, Calendar } from 'lucide-react';
 
 interface StreakTrackerProps {
   users: Record<UserId, User>;
   currentUserId: UserId;
+  startDate?: string;
+  daysUntilStart?: number;
 }
 
-export const StreakTracker: React.FC<StreakTrackerProps> = ({ users, currentUserId }) => {
+export const StreakTracker: React.FC<StreakTrackerProps> = ({
+  users,
+  currentUserId,
+  startDate,
+  daysUntilStart = 0,
+}) => {
   const sereja = users.sereja || { current_streak: 1, max_streak: 1, name: 'Серёжа' };
   const lera = users.lera || { current_streak: 1, max_streak: 1, name: 'Лера' };
 
   const myUser = currentUserId === 'sereja' ? sereja : lera;
+
+  const isPreStart = daysUntilStart > 0;
 
   return (
     <div className="bg-lime text-black rounded-4xl p-5 sm:p-6 shadow-lime relative overflow-hidden transition-all">
@@ -22,9 +31,16 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({ users, currentUser
           <span>30 Дней</span>
         </div>
 
-        <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-black shadow-xs">
-          <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-        </div>
+        {isPreStart ? (
+          <div className="flex items-center gap-1.5 bg-black/10 px-3 py-1 rounded-full text-xs font-bold text-black">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>Старт: {startDate?.split('-').reverse().slice(0, 2).join('.')}</span>
+          </div>
+        ) : (
+          <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-black shadow-xs">
+            <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+          </div>
+        )}
       </div>
 
       {/* Main Big Counter */}
@@ -35,6 +51,11 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({ users, currentUser
           </span>
           <span className="text-base font-bold text-black/60">/ 30</span>
         </div>
+        {isPreStart && (
+          <div className="text-xs font-bold text-black/70 mt-1">
+            До официального старта: {daysUntilStart} дн. (можно отмечать привычки уже сейчас)
+          </div>
+        )}
       </div>
 
       {/* 3 Columns Sub-stats */}

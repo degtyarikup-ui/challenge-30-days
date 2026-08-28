@@ -8,6 +8,7 @@ import {
   updateHabitApi,
   deleteHabitApi,
   authenticateUserApi,
+  updateStartDateApi,
   subscribeToEvents,
 } from './api';
 import { initTelegramApp, getTelegramUser, triggerHaptic } from './utils/telegram';
@@ -174,6 +175,11 @@ export const App: React.FC = () => {
     await loadData(selectedDate);
   };
 
+  const handleUpdateStartDate = async (date: string) => {
+    await updateStartDateApi(date);
+    await loadData(selectedDate);
+  };
+
   // 1-Time User Selection Dialog
   if (showUserSetup) {
     return (
@@ -250,7 +256,12 @@ export const App: React.FC = () => {
         )}
 
         {/* 1. Lime Hero Card & Streak Tracker */}
-        <StreakTracker users={state.users} currentUserId={currentUserId} />
+        <StreakTracker
+          users={state.users}
+          currentUserId={currentUserId}
+          startDate={state.startDate}
+          daysUntilStart={state.daysUntilStart}
+        />
 
         {/* 2. Active Habits Grid */}
         <TaskList
@@ -285,9 +296,11 @@ export const App: React.FC = () => {
         onClose={() => setIsManageModalOpen(false)}
         habits={state.habits}
         passiveRules={state.passiveRules}
+        startDate={state.startDate}
         onCreateHabit={handleCreateHabit}
         onUpdateHabit={handleUpdateHabit}
         onDeleteHabit={handleDeleteHabit}
+        onUpdateStartDate={handleUpdateStartDate}
       />
 
       <DayHistoryModal
