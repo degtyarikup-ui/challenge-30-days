@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { AppStateResponse, Habit, UserId } from './types';
 import {
   fetchAppState,
@@ -31,6 +31,9 @@ export const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
+  const selectedDateRef = useRef(selectedDate);
+  selectedDateRef.current = selectedDate;
+
   // Modals
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
@@ -44,6 +47,7 @@ export const App: React.FC = () => {
       setState(data);
       if (!date) {
         setSelectedDate(data.date);
+        selectedDateRef.current = data.date;
       }
     } catch (err) {
       console.error('Error fetching state:', err);
@@ -87,15 +91,40 @@ export const App: React.FC = () => {
 
     initAuth();
 
-    // SSE Realtime Subscription
-    const unsubscribe = subscribeToEvents(() => {
-      loadData(selectedDate);
+    // SSE Realtime Subscription with Granular Non-Blocking Updates
+    const unsubscribe = subscribeToEvents((event) => {
+      if (event && event.type === 'habit_toggled') {
+        const currentDate = selectedDateRef.current;
+        if (event.date === currentDate) {
+          setState((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              habits: prev.habits.map((h) => {
+                if (h.id === event.habitId) {
+                  return {
+                    ...h,
+                    [event.userId === 'sereja' ? 'status_sereja' : 'status_lera']: {
+                      completed: event.completed,
+                      value: event.value || null,
+                    },
+                  };
+                }
+                return h;
+              }),
+            };
+          });
+        }
+      } else {
+        // Full refresh for violations, start date changes, or CRUD
+        loadData(selectedDateRef.current);
+      }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [loadData, selectedDate, currentUserId]);
+  }, [loadData, currentUserId]);
 
   const handleSelectInitialUser = async (userId: UserId) => {
     setCurrentUserId(userId);
@@ -115,6 +144,7 @@ export const App: React.FC = () => {
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
+    selectedDateRef.current = date;
     loadData(date);
   };
 
@@ -123,7 +153,7 @@ export const App: React.FC = () => {
     const targetDate = selectedDate || state.date;
     const newStatus = !currentStatus;
 
-    // Optimistic UI update
+    // Instant local state update
     setState((prev) => {
       if (!prev) return prev;
       return {
@@ -150,6 +180,7 @@ export const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to toggle habit:', err);
+      // Revert only if network fails
       loadData(targetDate);
     }
   };

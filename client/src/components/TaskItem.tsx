@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HabitWithStatus, UserId } from '../types';
 import { Footprints, Moon, Dumbbell, BookOpen, CheckSquare2, Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
@@ -16,6 +16,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggle,
   disabled = false,
 }) => {
+  const [isPending, setIsPending] = useState(false);
+
   const getIcon = (title: string, isDark: boolean) => {
     const t = title.toLowerCase();
     const colorClass = isDark ? 'text-lime' : 'text-text-black';
@@ -37,10 +39,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const partnerTarget = currentUserId === 'sereja' ? habit.target_lera : habit.target_sereja;
   const hasDistinctTargets = habit.target_sereja && habit.target_lera && habit.target_sereja !== habit.target_lera;
 
-  const handleMyToggle = () => {
-    if (disabled) return;
+  const handleMyToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (disabled || isPending) return;
+
+    setIsPending(true);
     triggerHaptic(isMyDone ? 'light' : 'success');
     onToggle(habit.id, isMyDone);
+
+    // Release lock after short delay to prevent double firing
+    setTimeout(() => {
+      setIsPending(false);
+    }, 250);
   };
 
   return (
@@ -106,7 +116,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
           {/* Toggle Switch */}
           <div
-            className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-out flex items-center ${
+            className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-out flex items-center pointer-events-none ${
               isMyDone ? 'bg-lime justify-end' : 'bg-surface-subtle justify-start'
             }`}
           >
