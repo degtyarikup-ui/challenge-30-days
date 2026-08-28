@@ -28,6 +28,7 @@ jobs:
       - name: Build client
         run: |
           npm --prefix client run build
+          touch client/dist/.nojekyll
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
