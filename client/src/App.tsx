@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { AppStateResponse, Habit, UserId } from './types';
+import { AppStateResponse, Habit, HabitWithStatus, UserId } from './types';
 import {
   fetchAppState,
   toggleHabitApi,
@@ -18,6 +18,7 @@ import { TaskList } from './components/TaskList';
 import { RulesModal } from './components/RulesModal';
 import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
+import { TaskContextMenuModal } from './components/TaskContextMenuModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
 import { RefreshCw, User } from 'lucide-react';
 
@@ -39,6 +40,9 @@ export const App: React.FC = () => {
   const [isViolationModalOpen, setIsViolationModalOpen] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  const [contextMenuHabit, setContextMenuHabit] = useState<HabitWithStatus | null>(null);
+  const [initialEditingHabit, setInitialEditingHabit] = useState<Habit | null>(null);
 
   // Load App State
   const loadData = useCallback(async (date?: string) => {
@@ -180,9 +184,18 @@ export const App: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to toggle habit:', err);
-      // Revert only if network fails
       loadData(targetDate);
     }
+  };
+
+  const handleOpenContextMenu = (habit: HabitWithStatus) => {
+    setContextMenuHabit(habit);
+    setIsContextMenuOpen(true);
+  };
+
+  const handleEditFromContextMenu = (habit: HabitWithStatus) => {
+    setInitialEditingHabit(habit);
+    setIsManageModalOpen(true);
   };
 
   const handleConfirmViolation = async (ruleTitle: string, note: string) => {
@@ -268,7 +281,10 @@ export const App: React.FC = () => {
         yesterdayDate={state.yesterdayDate}
         isGracePeriod={state.isGracePeriod}
         onSelectDate={handleDateChange}
-        onOpenManageModal={() => setIsManageModalOpen(true)}
+        onOpenManageModal={() => {
+          setInitialEditingHabit(null);
+          setIsManageModalOpen(true);
+        }}
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
         onOpenRulesModal={() => setIsRulesModalOpen(true)}
       />
@@ -296,15 +312,28 @@ export const App: React.FC = () => {
           daysUntilStart={state.daysUntilStart}
         />
 
-        {/* 2. Compact Habits List */}
+        {/* 2. Compact Habits List with Long-press */}
         <TaskList
           habits={state.habits}
           currentUserId={currentUserId}
           onToggle={handleToggleHabit}
-          onOpenManageModal={() => setIsManageModalOpen(true)}
+          onContextMenu={handleOpenContextMenu}
+          onOpenManageModal={() => {
+            setInitialEditingHabit(null);
+            setIsManageModalOpen(true);
+          }}
           disabled={isPastDate && !isGracePeriodActiveForPast}
         />
       </main>
+
+      {/* Context Menu Modal (On Long Press) */}
+      <TaskContextMenuModal
+        isOpen={isContextMenuOpen}
+        onClose={() => setIsContextMenuOpen(false)}
+        habit={contextMenuHabit}
+        onEdit={handleEditFromContextMenu}
+        onDelete={handleDeleteHabit}
+      />
 
       {/* Modals */}
       <RulesModal
@@ -313,7 +342,10 @@ export const App: React.FC = () => {
         rules={state.passiveRules}
         currentUserId={currentUserId}
         onOpenViolationModal={() => setIsViolationModalOpen(true)}
-        onOpenManageModal={() => setIsManageModalOpen(true)}
+        onOpenManageModal={() => {
+          setInitialEditingHabit(null);
+          setIsManageModalOpen(true);
+        }}
         recentViolations={state.recentViolations}
       />
 
@@ -328,10 +360,14 @@ export const App: React.FC = () => {
 
       <ManageTasksModal
         isOpen={isManageModalOpen}
-        onClose={() => setIsManageModalOpen(false)}
+        onClose={() => {
+          setIsManageModalOpen(false);
+          setInitialEditingHabit(null);
+        }}
         habits={state.habits}
         passiveRules={state.passiveRules}
         startDate={state.startDate}
+        initialEditingHabit={initialEditingHabit}
         onCreateHabit={handleCreateHabit}
         onUpdateHabit={handleUpdateHabit}
         onDeleteHabit={handleDeleteHabit}

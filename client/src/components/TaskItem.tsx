@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { HabitWithStatus, UserId } from '../types';
 import { Footprints, Moon, Dumbbell, BookOpen, CheckSquare2, Check } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
@@ -7,6 +7,7 @@ interface TaskItemProps {
   habit: HabitWithStatus;
   currentUserId: UserId;
   onToggle: (habitId: number, currentStatus: boolean) => void;
+  onContextMenu: (habit: HabitWithStatus) => void;
   disabled?: boolean;
 }
 
@@ -14,9 +15,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   habit,
   currentUserId,
   onToggle,
+  onContextMenu,
   disabled = false,
 }) => {
   const [isPending, setIsPending] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressRef = useRef(false);
 
   const getIcon = (title: string, isDark: boolean) => {
     const t = title.toLowerCase();
@@ -39,15 +43,36 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const partnerTarget = currentUserId === 'sereja' ? habit.target_lera : habit.target_sereja;
   const hasDistinctTargets = habit.target_sereja && habit.target_lera && habit.target_sereja !== habit.target_lera;
 
-  const handleMyToggle = (e: React.MouseEvent) => {
+  // Long-press handlers
+  const startLongPress = () => {
+    isLongPressRef.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      triggerHaptic('heavy');
+      onContextMenu(habit);
+    }, 450);
+  };
+
+  const cancelLongPress = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isLongPressRef.current) {
+      isLongPressRef.current = false;
+      return;
+    }
+
     if (disabled || isPending) return;
 
     setIsPending(true);
     triggerHaptic(isMyDone ? 'light' : 'success');
     onToggle(habit.id, isMyDone);
 
-    // Release lock after short delay to prevent double firing
     setTimeout(() => {
       setIsPending(false);
     }, 250);
@@ -55,7 +80,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
   return (
     <div
-      onClick={handleMyToggle}
+      onClick={handleClick}
+      onMouseDown={startLongPress}
+      onMouseUp={cancelLongPress}
+      onMouseLeave={cancelLongPress}
+      onTouchStart={startLongPress}
+      onTouchEnd={cancelLongPress}
+      onTouchMove={cancelLongPress}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        triggerHaptic('heavy');
+        onContextMenu(habit);
+      }}
       className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-200 ease-out cursor-pointer select-none active:scale-[0.98] ${
         isMyDone
           ? 'bg-card-dark text-white'

@@ -8,6 +8,7 @@ interface TaskListProps {
   habits: HabitWithStatus[];
   currentUserId: UserId;
   onToggle: (habitId: number, currentStatus: boolean) => void;
+  onContextMenu: (habit: HabitWithStatus) => void;
   onOpenManageModal: () => void;
   disabled?: boolean;
 }
@@ -16,6 +17,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   habits,
   currentUserId,
   onToggle,
+  onContextMenu,
   onOpenManageModal,
   disabled = false,
 }) => {
@@ -46,6 +48,7 @@ export const TaskList: React.FC<TaskListProps> = ({
               habit={habit}
               currentUserId={currentUserId}
               onToggle={onToggle}
+              onContextMenu={onContextMenu}
               disabled={disabled}
             />
           ))}

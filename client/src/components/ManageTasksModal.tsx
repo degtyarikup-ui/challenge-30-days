@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Habit, HabitCategory, TargetType } from '../types';
 import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal, CalendarDays } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
@@ -9,6 +9,7 @@ interface ManageTasksModalProps {
   habits: Habit[];
   passiveRules: Habit[];
   startDate: string;
+  initialEditingHabit?: Habit | null;
   onCreateHabit: (habit: Partial<Habit>) => Promise<void>;
   onUpdateHabit: (id: number, habit: Partial<Habit>) => Promise<void>;
   onDeleteHabit: (id: number) => Promise<void>;
@@ -21,6 +22,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   habits,
   passiveRules,
   startDate,
+  initialEditingHabit,
   onCreateHabit,
   onUpdateHabit,
   onDeleteHabit,
@@ -41,6 +43,19 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   // Start Date state
   const [selectedStartDate, setSelectedStartDate] = useState(startDate || '2026-08-31');
   const [isSavingStartDate, setIsSavingStartDate] = useState(false);
+
+  useEffect(() => {
+    if (initialEditingHabit) {
+      setActiveTab(initialEditingHabit.category);
+      setEditingId(initialEditingHabit.id);
+      setTitle(initialEditingHabit.title);
+      setTargetType(initialEditingHabit.target_type);
+      setTargetSereja(initialEditingHabit.target_sereja);
+      setTargetLera(initialEditingHabit.target_lera);
+      setUnit(initialEditingHabit.unit);
+      setIsCreating(false);
+    }
+  }, [initialEditingHabit]);
 
   if (!isOpen) return null;
 
@@ -121,7 +136,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+      <div className="bg-white w-full max-w-lg rounded-3xl p-6 space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -133,6 +148,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
           <button
             onClick={() => {
               triggerHaptic('light');
+              resetForm();
               onClose();
             }}
             className="w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-black hover:bg-surface-subtle transition"
