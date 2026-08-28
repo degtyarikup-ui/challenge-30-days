@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import confetti from 'canvas-confetti';
 import { AppStateResponse, Habit, UserId } from './types';
 import {
   fetchAppState,
@@ -19,7 +18,7 @@ import { PassiveRulesCard } from './components/PassiveRulesCard';
 import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
-import { RefreshCw, Bot, Heart, Flame } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [state, setState] = useState<AppStateResponse | null>(null);
@@ -35,7 +34,7 @@ export const App: React.FC = () => {
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
-  // Initialize Telegram & Load Data
+  // Load Data
   const loadData = useCallback(async (date?: string) => {
     try {
       const data = await fetchAppState(date);
@@ -54,14 +53,13 @@ export const App: React.FC = () => {
     initTelegramApp();
     const tgUser = getTelegramUser();
     if (tgUser) {
-      // Auto-link Telegram ID
       const savedUser = (localStorage.getItem('challenge_user_id') as UserId) || 'sereja';
       linkTelegramIdApi(savedUser, tgUser.id.toString());
     }
 
     loadData();
 
-    // Subscribe to real-time events
+    // SSE Realtime Subscription
     const unsubscribe = subscribeToEvents(() => {
       loadData(selectedDate);
     });
@@ -84,15 +82,6 @@ export const App: React.FC = () => {
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
     loadData(date);
-  };
-
-  const fireConfetti = () => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#3B82F6', '#EC4899', '#F59E0B', '#10B981'],
-    });
   };
 
   const handleToggleHabit = async (habitId: number, userId: UserId, currentStatus: boolean) => {
@@ -123,12 +112,11 @@ export const App: React.FC = () => {
     try {
       const res = await toggleHabitApi(habitId, userId, targetDate, newStatus);
       if (res.allDone) {
-        fireConfetti();
         triggerHaptic('success');
       }
     } catch (err) {
       console.error('Failed to toggle habit:', err);
-      loadData(targetDate); // Revert on failure
+      loadData(targetDate);
     }
   };
 
@@ -156,14 +144,9 @@ export const App: React.FC = () => {
 
   if (loading || !state) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4 text-slate-400">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-pink-500 flex items-center justify-center shadow-glow-gold animate-bounce">
-          <Flame className="w-7 h-7 text-white" />
-        </div>
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
-          <span>Загрузка челленджа...</span>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-2 text-text-secondary">
+        <RefreshCw className="w-5 h-5 animate-spin text-text-muted" />
+        <span className="text-xs">Загрузка...</span>
       </div>
     );
   }
@@ -172,7 +155,7 @@ export const App: React.FC = () => {
   const isGracePeriodActiveForPast = isPastDate && selectedDate === state.yesterdayDate && state.isGracePeriod;
 
   return (
-    <div className="min-h-screen bg-background text-slate-100 pb-16 flex flex-col">
+    <div className="min-h-screen bg-background text-text-primary pb-16 flex flex-col">
       {/* Header */}
       <Header
         currentUserId={currentUserId}
@@ -186,25 +169,25 @@ export const App: React.FC = () => {
         onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
       />
 
-      {/* Main Content Area */}
-      <main className="max-w-3xl w-full mx-auto px-4 sm:px-6 py-4 space-y-5 flex-1">
-        {/* Past Date Warning if viewing older history beyond grace period */}
+      {/* Main Content */}
+      <main className="max-w-2xl w-full mx-auto px-4 sm:px-6 py-4 space-y-4 flex-1">
+        {/* Past Date indicator */}
         {isPastDate && !isGracePeriodActiveForPast && (
-          <div className="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-300 flex items-center justify-between">
-            <span>Просмотр истории за <b>{selectedDate}</b></span>
+          <div className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-xs text-text-secondary flex items-center justify-between">
+            <span>Просмотр дня: {selectedDate}</span>
             <button
               onClick={() => handleDateChange(state.actualDate)}
-              className="text-blue-400 hover:text-blue-300 font-semibold underline text-xs"
+              className="text-sereja hover:underline font-medium"
             >
               Вернуться на сегодня
             </button>
           </div>
         )}
 
-        {/* 1. 30-Day Streak Tracker */}
+        {/* 1. Streak Tracker */}
         <StreakTracker users={state.users} currentUserId={currentUserId} />
 
-        {/* 2. Active Daily Habits List */}
+        {/* 2. Active Habits */}
         <TaskList
           habits={state.habits}
           currentUserId={currentUserId}
@@ -213,25 +196,13 @@ export const App: React.FC = () => {
           disabled={isPastDate && !isGracePeriodActiveForPast}
         />
 
-        {/* 3. Passive Rules & Prohibited Items (Clean eating, no alcohol/cigarettes) */}
+        {/* 3. Passive Rules */}
         <PassiveRulesCard
           rules={state.passiveRules}
           currentUserId={currentUserId}
           onOpenViolationModal={() => setIsViolationModalOpen(true)}
           recentViolations={state.recentViolations}
         />
-
-        {/* Bot & WebApp footer indicator */}
-        <div className="pt-4 border-t border-card-border/60 flex items-center justify-between text-[11px] text-slate-500">
-          <div className="flex items-center gap-1.5">
-            <Heart className="w-3.5 h-3.5 text-pink-500" />
-            <span>Серёжа + Лера = 30 Дней к цели</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Bot className="w-3.5 h-3.5 text-blue-400" />
-            <span>Telegram Bot Connected</span>
-          </div>
-        </div>
       </main>
 
       {/* Modals */}

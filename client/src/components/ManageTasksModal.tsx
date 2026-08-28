@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Habit, HabitCategory, TargetType } from '../types';
-import { Plus, Trash2, Edit2, X, Check, Settings } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface ManageTasksModalProps {
@@ -92,21 +92,21 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Вы уверены, что хотите удалить эту цель?')) {
+    if (confirm('Удалить эту цель?')) {
       triggerHaptic('warning');
       await onDeleteHabit(id);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-card border border-card-border w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="bg-white border border-border w-full max-w-lg rounded-2xl p-5 shadow-xl space-y-3.5 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="w-5 h-5 text-pink-400" />
-            <h3 className="text-base sm:text-lg font-bold text-white">
-              Настройка целей и привычек
+            <SlidersHorizontal className="w-4 h-4 text-text-secondary" />
+            <h3 className="text-base font-semibold text-text-primary">
+              Настройка целей
             </h3>
           </div>
           <button
@@ -114,21 +114,21 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               triggerHaptic('light');
               onClose();
             }}
-            className="p-1 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1 rounded-md text-text-secondary hover:text-text-primary hover:bg-surface-hover transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-card-border">
+        <div className="flex items-center bg-surface-subtle p-0.5 rounded-lg border border-border">
           <button
             onClick={() => {
               setActiveTab('active');
               resetForm();
             }}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'active' ? 'bg-blue-600 text-white shadow-glow-blue' : 'text-slate-400 hover:text-slate-200'
+            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === 'active' ? 'bg-white text-text-primary border border-border shadow-xs' : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             Ежедневные привычки ({habits.length})
@@ -138,11 +138,11 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               setActiveTab('passive');
               resetForm();
             }}
-            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition ${
-              activeTab === 'passive' ? 'bg-pink-600 text-white shadow-glow-pink' : 'text-slate-400 hover:text-slate-200'
+            className={`flex-1 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === 'passive' ? 'bg-white text-text-primary border border-border shadow-xs' : 'text-text-secondary hover:text-text-primary'
             }`}
           >
-            Правила питания / Запреты ({passiveRules.length})
+            Правила питания ({passiveRules.length})
           </button>
         </div>
 
@@ -153,37 +153,37 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               triggerHaptic('light');
               setIsCreating(true);
             }}
-            className="w-full py-2.5 bg-card-hover border border-dashed border-card-border hover:border-slate-500 rounded-xl text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 transition active:scale-98"
+            className="w-full py-2 bg-surface-subtle border border-dashed border-border hover:bg-surface-hover rounded-lg text-xs font-medium text-text-primary flex items-center justify-center gap-1.5 transition"
           >
-            <Plus className="w-4 h-4 text-emerald-400" />
+            <Plus className="w-3.5 h-3.5" />
             Добавить {activeTab === 'active' ? 'привычку' : 'правило питания'}
           </button>
         )}
 
         {/* Create / Edit Form */}
         {(isCreating || editingId) && (
-          <form onSubmit={handleSubmit} className="bg-slate-900/80 border border-card-border p-4 rounded-2xl space-y-3">
+          <form onSubmit={handleSubmit} className="bg-surface-subtle border border-border p-3.5 rounded-xl space-y-2.5">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-slate-200">
-                {editingId ? 'Редактирование цели' : 'Новая цель'}
+              <h4 className="text-xs font-medium text-text-primary">
+                {editingId ? 'Редактирование' : 'Новая цель'}
               </h4>
               <button
                 type="button"
                 onClick={resetForm}
-                className="text-xs text-slate-400 hover:text-white"
+                className="text-xs text-text-secondary hover:text-text-primary"
               >
                 Отмена
               </button>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-slate-400">Название:</label>
+              <label className="text-[11px] font-medium text-text-secondary">Название:</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Например: Чтение книги, Медитация"
-                className="w-full bg-slate-950 border border-card-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                placeholder="Название цели"
+                className="w-full bg-white border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-border-strong"
                 required
               />
             </div>
@@ -192,51 +192,50 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               <>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-400">Тип цели:</label>
+                    <label className="text-[11px] font-medium text-text-secondary">Тип:</label>
                     <select
                       value={targetType}
                       onChange={(e) => setTargetType(e.target.value as TargetType)}
-                      className="w-full bg-slate-950 border border-card-border rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-white border border-border rounded-lg px-2 py-1.5 text-xs text-text-primary focus:outline-none focus:border-border-strong"
                     >
                       <option value="number">Число / Количество</option>
-                      <option value="time">Время (Сон, тайминг)</option>
-                      <option value="checkbox">Простая галочка</option>
+                      <option value="time">Время (Сон)</option>
+                      <option value="checkbox">Чекбокс</option>
                     </select>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-400">Единица (шагов, мин):</label>
+                    <label className="text-[11px] font-medium text-text-secondary">Единица (шагов, мин):</label>
                     <input
                       type="text"
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
-                      placeholder="шагов / мин / стр"
-                      className="w-full bg-slate-950 border border-card-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                      placeholder="шагов / мин"
+                      className="w-full bg-white border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-border-strong"
                     />
                   </div>
                 </div>
 
-                {/* Individual targets for Sereja & Lera */}
-                <div className="grid grid-cols-2 gap-2 bg-slate-950/60 p-2.5 rounded-xl border border-card-border/60">
+                <div className="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-lg border border-border">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-blue-400">👦 Цель для Серёжи:</label>
+                    <label className="text-[11px] font-medium text-sereja-text">Серёжа:</label>
                     <input
                       type="text"
                       value={targetSereja}
                       onChange={(e) => setTargetSereja(e.target.value)}
                       placeholder="00:00 или 6000"
-                      className="w-full bg-slate-900 border border-blue-500/30 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-surface-subtle border border-border rounded-md px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-sereja"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-pink-400">👧 Цель для Леры:</label>
+                    <label className="text-[11px] font-medium text-lera-text">Лера:</label>
                     <input
                       type="text"
                       value={targetLera}
                       onChange={(e) => setTargetLera(e.target.value)}
                       placeholder="23:30 или 6000"
-                      className="w-full bg-slate-900 border border-pink-500/30 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-pink-500"
+                      className="w-full bg-surface-subtle border border-border rounded-md px-2 py-1 text-xs text-text-primary focus:outline-none focus:border-lera"
                     />
                   </div>
                 </div>
@@ -246,26 +245,26 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5"
+              className="w-full py-1.5 bg-text-primary hover:bg-black text-white text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5"
             >
-              <Check className="w-4 h-4" />
-              {editingId ? 'Сохранить изменения' : 'Создать цель'}
+              <Check className="w-3.5 h-3.5" />
+              {editingId ? 'Сохранить' : 'Создать'}
             </button>
           </form>
         )}
 
         {/* Existing List */}
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
           {currentList.map((item) => (
             <div
               key={item.id}
-              className="p-3 bg-slate-900/50 border border-card-border/70 rounded-xl flex items-center justify-between gap-2"
+              className="p-2.5 bg-white border border-border rounded-lg flex items-center justify-between gap-2"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold text-white truncate">{item.title}</p>
+                <p className="text-xs font-medium text-text-primary truncate">{item.title}</p>
                 {item.category === 'active' && (
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Серёжа: <span className="text-blue-300 font-medium">{item.target_sereja} {item.unit}</span> • Лера: <span className="text-pink-300 font-medium">{item.target_lera} {item.unit}</span>
+                  <p className="text-[11px] text-text-secondary mt-0.5">
+                    Серёжа: {item.target_sereja} {item.unit} • Лера: {item.target_lera} {item.unit}
                   </p>
                 )}
               </div>
@@ -273,14 +272,14 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => startEdit(item)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                  className="p-1 rounded text-text-secondary hover:text-text-primary hover:bg-surface-hover transition"
                   title="Редактировать"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="p-1.5 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition"
+                  className="p-1 rounded text-danger hover:text-red-700 hover:bg-red-50 transition"
                   title="Удалить"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

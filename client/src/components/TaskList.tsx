@@ -1,7 +1,7 @@
 import React from 'react';
 import { HabitWithStatus, UserId } from '../types';
 import { TaskItem } from './TaskItem';
-import { ListTodo, Plus } from 'lucide-react';
+import { CheckSquare, Plus } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface TaskListProps {
@@ -24,29 +24,29 @@ export const TaskList: React.FC<TaskListProps> = ({
   const leraDone = habits.filter(h => h.status_lera.completed).length;
 
   return (
-    <div className="space-y-3">
-      {/* Header & Progress Summary */}
+    <div className="space-y-2.5">
+      {/* Header */}
       <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <ListTodo className="w-5 h-5 text-indigo-400" />
-          <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
+        <div className="flex items-center gap-1.5">
+          <CheckSquare className="w-4 h-4 text-text-secondary" />
+          <h2 className="text-sm font-semibold text-text-primary">
             Ежедневные привычки
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="bg-blue-500/10 border border-blue-500/20 text-blue-300 px-2 py-0.5 rounded-lg font-semibold">
-            👦 {serejaDone}/{total}
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="bg-sereja-light border border-sereja-border text-sereja-text px-2 py-0.5 rounded font-medium">
+            Серёжа: {serejaDone}/{total}
           </span>
-          <span className="bg-pink-500/10 border border-pink-500/20 text-pink-300 px-2 py-0.5 rounded-lg font-semibold">
-            👧 {leraDone}/{total}
+          <span className="bg-lera-light border border-lera-border text-lera-text px-2 py-0.5 rounded font-medium">
+            Лера: {leraDone}/{total}
           </span>
         </div>
       </div>
 
       {/* Habit Items */}
       {habits.length > 0 ? (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {habits.map((habit) => (
             <TaskItem
               key={habit.id}
@@ -58,16 +58,16 @@ export const TaskList: React.FC<TaskListProps> = ({
           ))}
         </div>
       ) : (
-        <div className="bg-card border border-dashed border-card-border rounded-2xl p-8 text-center space-y-3">
-          <p className="text-slate-400 text-sm">Список ежедневных привычек пуст.</p>
+        <div className="bg-white border border-dashed border-border rounded-xl p-6 text-center space-y-2">
+          <p className="text-text-secondary text-xs">Список привычек пуст.</p>
           <button
             onClick={() => {
               triggerHaptic('light');
               onOpenManageModal();
             }}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 transition"
+            className="px-3 py-1.5 bg-surface-subtle hover:bg-surface-hover border border-border text-text-primary text-xs font-medium rounded-lg inline-flex items-center gap-1.5 transition"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             Добавить привычку
           </button>
         </div>

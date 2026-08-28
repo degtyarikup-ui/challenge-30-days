@@ -8,27 +8,45 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#090A0F',
-        card: '#12141C',
-        'card-hover': '#181B26',
-        'card-border': '#232736',
-        accent: {
-          sereja: '#3B82F6', // Vibrant Blue
-          'sereja-glow': 'rgba(59, 130, 246, 0.3)',
-          lera: '#EC4899',   // Vibrant Pink/Rose
-          'lera-glow': 'rgba(236, 72, 153, 0.3)',
-          gold: '#F59E0B',
-          emerald: '#10B981',
+        background: '#ffffff',
+        surface: '#fafaf9',
+        'surface-subtle': '#f7f7f5',
+        'surface-hover': '#f1f1ef',
+        border: '#e7e7e4',
+        'border-strong': '#d4d4d0',
+        'text-primary': '#2f2f2f',
+        'text-secondary': '#73726e',
+        'text-muted': '#9b9a97',
+        sereja: {
+          DEFAULT: '#2563eb',
+          light: '#eff6ff',
+          border: '#bfdbfe',
+          text: '#1d4ed8',
+        },
+        lera: {
+          DEFAULT: '#db2777',
+          light: '#fdf2f8',
+          border: '#fbcfe8',
+          text: '#be185d',
+        },
+        danger: {
+          DEFAULT: '#dc2626',
+          light: '#fef2f2',
+          border: '#fecaca',
+          text: '#b91c1c',
         }
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          'Helvetica',
+          'Arial',
+          'sans-serif'
+        ],
       },
-      boxShadow: {
-        'glow-blue': '0 0 20px -5px rgba(59, 130, 246, 0.5)',
-        'glow-pink': '0 0 20px -5px rgba(236, 72, 153, 0.5)',
-        'glow-gold': '0 0 20px -5px rgba(245, 158, 11, 0.5)',
-      }
     },
   },
   plugins: [],

@@ -33,8 +33,8 @@ export function initTelegramApp() {
     tg.ready();
     tg.expand();
     try {
-      tg.setHeaderColor('#090A0F');
-      tg.setBackgroundColor('#090A0F');
+      tg.setHeaderColor('#ffffff');
+      tg.setBackgroundColor('#ffffff');
     } catch (e) {
       // Ignored if older client
     }
