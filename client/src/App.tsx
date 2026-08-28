@@ -365,6 +365,7 @@ export const App: React.FC = () => {
       <FullScreenCelebration
         isOpen={isFullScreenCelebrationOpen}
         onClose={() => setIsFullScreenCelebrationOpen(false)}
+        dayNumber={state.users[currentUserId]?.current_streak || 1}
       />
 
       {/* Context Menu Modal (On Long Press) */}
