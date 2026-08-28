@@ -51,11 +51,19 @@ export function initDatabase() {
       target_sereja TEXT NOT NULL DEFAULT '',
       target_lera TEXT NOT NULL DEFAULT '',
       unit TEXT NOT NULL DEFAULT '',
+      assigned_to TEXT NOT NULL DEFAULT 'both',
       is_active INTEGER NOT NULL DEFAULT 1,
       order_index INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
     );
   `);
+
+  // Migration for assigned_to
+  try {
+    db.exec("ALTER TABLE habits ADD COLUMN assigned_to TEXT NOT NULL DEFAULT 'both'");
+  } catch (e) {
+    // Column already exists
+  }
 
   // 4. Habit logs table (date stored as YYYY-MM-DD)
   db.exec(`
@@ -124,8 +132,8 @@ export function initDatabase() {
   const habitCount = db.prepare('SELECT COUNT(*) as count FROM habits').get() as { count: number };
   if (habitCount.count === 0) {
     const insertHabit = db.prepare(`
-      INSERT INTO habits (title, category, target_type, target_sereja, target_lera, unit, is_active, order_index)
-      VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+      INSERT INTO habits (title, category, target_type, target_sereja, target_lera, unit, assigned_to, is_active, order_index)
+      VALUES (?, ?, ?, ?, ?, ?, 'both', 1, ?)
     `);
 
     // Active daily habits from screenshot
@@ -216,11 +224,15 @@ export function getHabitsWithStatus(date: string): { activeHabits: HabitWithStat
       const statusLera = logsMap.get(`${habit.id}_lera`) || { completed: false, value: null };
       activeHabits.push({
         ...habit,
+        assigned_to: habit.assigned_to || 'both',
         status_sereja: statusSereja,
         status_lera: statusLera,
       });
     } else {
-      passiveRules.push(habit);
+      passiveRules.push({
+        ...habit,
+        assigned_to: habit.assigned_to || 'both',
+      });
     }
   }
 

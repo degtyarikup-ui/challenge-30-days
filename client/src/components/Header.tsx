@@ -31,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="px-4 pt-3 pb-1 sm:px-6">
       <div className="max-w-xl mx-auto flex items-center justify-between">
-        {/* User Identity & Date */}
+        {/* User Identity */}
         <div className="flex items-center gap-2">
           <div className="bg-card-dark text-white px-3 py-1.5 rounded-full flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-lime" />
@@ -40,39 +40,23 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
 
-          {/* Date Selector Pills */}
-          <div className="flex items-center gap-1 bg-white p-1 rounded-full text-xs font-bold">
+          {/* Grace Period Switch to Yesterday (if applicable) */}
+          {isGracePeriod && (
             <button
               onClick={() => {
                 triggerHaptic('light');
-                onSelectDate(actualDate);
+                onSelectDate(isViewingYesterday ? actualDate : yesterdayDate);
               }}
-              className={`px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95 ${
-                !isViewingYesterday
-                  ? 'bg-card-dark text-white'
-                  : 'text-text-muted hover:text-text-black'
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 ${
+                isViewingYesterday
+                  ? 'bg-lime text-black'
+                  : 'bg-white text-text-muted hover:text-text-black'
               }`}
             >
-              Сегодня
+              <Clock className="w-3 h-3" />
+              <span>{isViewingYesterday ? 'Вчера' : 'Закрыть вчера'}</span>
             </button>
-
-            {isGracePeriod && (
-              <button
-                onClick={() => {
-                  triggerHaptic('light');
-                  onSelectDate(yesterdayDate);
-                }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full transition-all duration-150 active:scale-95 ${
-                  isViewingYesterday
-                    ? 'bg-lime text-black font-bold'
-                    : 'text-text-muted hover:text-text-black'
-                }`}
-              >
-                <Clock className="w-3 h-3" />
-                <span>Вчера</span>
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Action Buttons */}

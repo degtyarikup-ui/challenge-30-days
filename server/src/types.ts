@@ -1,4 +1,5 @@
 export type UserId = 'sereja' | 'lera';
+export type AssignedTo = 'both' | 'sereja' | 'lera';
 
 export interface User {
   id: UserId;
@@ -22,6 +23,7 @@ export interface Habit {
   target_sereja: string;
   target_lera: string;
   unit: string;
+  assigned_to: AssignedTo;
   is_active: number;
   order_index: number;
   created_at: string;
@@ -31,8 +33,8 @@ export interface HabitLog {
   id: number;
   habit_id: number;
   user_id: UserId;
-  date: string; // YYYY-MM-DD
-  completed: number; // 0 or 1
+  date: string;
+  completed: number;
   value: string | null;
   updated_at: string;
 }
@@ -40,7 +42,7 @@ export interface HabitLog {
 export interface Violation {
   id: number;
   user_id: UserId;
-  date: string; // YYYY-MM-DD
+  date: string;
   rule_title: string;
   note: string | null;
   created_at: string;

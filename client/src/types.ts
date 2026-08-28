@@ -1,4 +1,5 @@
 export type UserId = 'sereja' | 'lera';
+export type AssignedTo = 'both' | 'sereja' | 'lera';
 
 export interface User {
   id: UserId;
@@ -21,6 +22,7 @@ export interface Habit {
   target_sereja: string;
   target_lera: string;
   unit: string;
+  assigned_to?: AssignedTo;
   is_active: number;
   order_index: number;
   created_at: string;

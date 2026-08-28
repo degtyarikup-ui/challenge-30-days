@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Habit, HabitCategory, TargetType } from '../types';
-import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal, CalendarDays } from 'lucide-react';
+import { Habit, HabitCategory, TargetType, AssignedTo } from '../types';
+import { Plus, Trash2, Edit2, X, Check, SlidersHorizontal, CalendarDays, User, Users } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface ManageTasksModalProps {
@@ -35,6 +35,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   // Form State
   const [title, setTitle] = useState('');
   const [targetType, setTargetType] = useState<TargetType>('number');
+  const [assignedTo, setAssignedTo] = useState<AssignedTo>('both');
   const [targetSereja, setTargetSereja] = useState('');
   const [targetLera, setTargetLera] = useState('');
   const [unit, setUnit] = useState('');
@@ -50,6 +51,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
       setEditingId(initialEditingHabit.id);
       setTitle(initialEditingHabit.title);
       setTargetType(initialEditingHabit.target_type);
+      setAssignedTo(initialEditingHabit.assigned_to || 'both');
       setTargetSereja(initialEditingHabit.target_sereja);
       setTargetLera(initialEditingHabit.target_lera);
       setUnit(initialEditingHabit.unit);
@@ -64,6 +66,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
   const resetForm = () => {
     setTitle('');
     setTargetType('number');
+    setAssignedTo('both');
     setTargetSereja('');
     setTargetLera('');
     setUnit('');
@@ -75,6 +78,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
     setEditingId(h.id);
     setTitle(h.title);
     setTargetType(h.target_type);
+    setAssignedTo(h.assigned_to || 'both');
     setTargetSereja(h.target_sereja);
     setTargetLera(h.target_lera);
     setUnit(h.unit);
@@ -91,6 +95,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
         await onUpdateHabit(editingId, {
           title: title.trim(),
           target_type: targetType,
+          assigned_to: assignedTo,
           target_sereja: targetSereja.trim(),
           target_lera: targetLera.trim(),
           unit: unit.trim(),
@@ -100,6 +105,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
           title: title.trim(),
           category: activeTab,
           target_type: activeTab === 'passive' ? 'checkbox' : targetType,
+          assigned_to: assignedTo,
           target_sereja: targetSereja.trim(),
           target_lera: targetLera.trim(),
           unit: unit.trim(),
@@ -227,6 +233,43 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
 
             {activeTab === 'active' && (
               <>
+                {/* Assignee selection */}
+                <div className="space-y-1">
+                  <label className="text-[11px] font-bold text-text-black">Кому назначить:</label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setAssignedTo('both')}
+                      className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${
+                        assignedTo === 'both' ? 'bg-card-dark text-white' : 'bg-white text-text-black hover:bg-surface-subtle'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>Обоим</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssignedTo('sereja')}
+                      className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${
+                        assignedTo === 'sereja' ? 'bg-card-dark text-white' : 'bg-white text-text-black hover:bg-surface-subtle'
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Серёже</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAssignedTo('lera')}
+                      className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${
+                        assignedTo === 'lera' ? 'bg-card-dark text-white' : 'bg-white text-text-black hover:bg-surface-subtle'
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Лере</span>
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <label className="text-[11px] font-bold text-text-black">Тип:</label>
@@ -253,28 +296,33 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 bg-white p-3 rounded-2xl">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-text-black">Серёжа:</label>
-                    <input
-                      type="text"
-                      value={targetSereja}
-                      onChange={(e) => setTargetSereja(e.target.value)}
-                      placeholder="00:00 или 6000"
-                      className="w-full bg-surface-muted rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-black focus:outline-none"
-                    />
-                  </div>
+                {/* Dynamic Targets based on Assignee */}
+                <div className="bg-white p-3 rounded-2xl space-y-2">
+                  {(assignedTo === 'both' || assignedTo === 'sereja') && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-text-black">Цель для Серёжи:</label>
+                      <input
+                        type="text"
+                        value={targetSereja}
+                        onChange={(e) => setTargetSereja(e.target.value)}
+                        placeholder="00:00 или 6000"
+                        className="w-full bg-surface-muted rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-black focus:outline-none"
+                      />
+                    </div>
+                  )}
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-text-black">Лера:</label>
-                    <input
-                      type="text"
-                      value={targetLera}
-                      onChange={(e) => setTargetLera(e.target.value)}
-                      placeholder="23:30 или 6000"
-                      className="w-full bg-surface-muted rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-black focus:outline-none"
-                    />
-                  </div>
+                  {(assignedTo === 'both' || assignedTo === 'lera') && (
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-text-black">Цель для Леры:</label>
+                      <input
+                        type="text"
+                        value={targetLera}
+                        onChange={(e) => setTargetLera(e.target.value)}
+                        placeholder="23:30 или 6000"
+                        className="w-full bg-surface-muted rounded-lg px-2.5 py-1.5 text-xs font-semibold text-text-black focus:outline-none"
+                      />
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -282,7 +330,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2.5 bg-card-dark hover:bg-black text-white text-xs font-bold rounded-2xl transition flex items-center justify-center gap-1.5 shadow-sm"
+              className="w-full py-2.5 bg-card-dark hover:bg-black text-white text-xs font-bold rounded-2xl transition flex items-center justify-center gap-1.5 shadow-none"
             >
               <Check className="w-3.5 h-3.5" />
               {editingId ? 'Сохранить' : 'Создать'}
@@ -298,10 +346,21 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               className="p-3 bg-surface-muted rounded-2xl flex items-center justify-between gap-2"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-text-black truncate">{item.title}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-text-black truncate">{item.title}</p>
+                  {item.assigned_to && item.assigned_to !== 'both' && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white text-text-muted">
+                      {item.assigned_to === 'sereja' ? 'Серёжа' : 'Лера'}
+                    </span>
+                  )}
+                </div>
                 {item.category === 'active' && (
                   <p className="text-[11px] font-medium text-text-muted mt-0.5">
-                    Серёжа: {item.target_sereja} {item.unit} • Лера: {item.target_lera} {item.unit}
+                    {item.assigned_to === 'both' || !item.assigned_to
+                      ? `Серёжа: ${item.target_sereja} ${item.unit} • Лера: ${item.target_lera} ${item.unit}`
+                      : item.assigned_to === 'sereja'
+                      ? `Серёжа: ${item.target_sereja} ${item.unit}`
+                      : `Лера: ${item.target_lera} ${item.unit}`}
                   </p>
                 )}
               </div>
@@ -347,7 +406,7 @@ export const ManageTasksModal: React.FC<ManageTasksModalProps> = ({
               <button
                 onClick={handleSaveStartDate}
                 disabled={isSavingStartDate}
-                className="px-3 py-1.5 bg-lime text-black font-bold text-xs rounded-xl shadow-xs active:scale-95 transition"
+                className="px-3 py-1.5 bg-lime text-black font-bold text-xs rounded-xl shadow-none active:scale-95 transition"
               >
                 {isSavingStartDate ? '...' : 'Ок'}
               </button>

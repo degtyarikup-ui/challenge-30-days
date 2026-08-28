@@ -21,28 +21,46 @@ export const TaskList: React.FC<TaskListProps> = ({
   onOpenManageModal,
   disabled = false,
 }) => {
-  const total = habits.length;
-  const myDone = habits.filter(h =>
+  // Show habits that are either for both or for the current user
+  const visibleHabits = habits.filter(
+    (h) => !h.assigned_to || h.assigned_to === 'both' || h.assigned_to === currentUserId
+  );
+
+  const total = visibleHabits.length;
+  const myDone = visibleHabits.filter((h) =>
     currentUserId === 'sereja' ? h.status_sereja.completed : h.status_lera.completed
   ).length;
 
   return (
     <div className="space-y-2.5">
-      {/* Header */}
+      {/* Header with Quick Add Button */}
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-base font-black tracking-tight text-text-black">
-          Привычки
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-black tracking-tight text-text-black">
+            Привычки
+          </h2>
+          <span className="bg-white text-text-black px-2.5 py-0.5 rounded-full text-xs font-bold">
+            {myDone} из {total}
+          </span>
+        </div>
 
-        <span className="bg-white text-text-black px-2.5 py-0.5 rounded-full text-xs font-bold">
-          {myDone} из {total}
-        </span>
+        {/* Quick Add Button */}
+        <button
+          onClick={() => {
+            triggerHaptic('light');
+            onOpenManageModal();
+          }}
+          className="px-3 py-1.5 bg-card-dark hover:bg-black text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-none"
+        >
+          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+          <span>Добавить</span>
+        </button>
       </div>
 
       {/* List of Compact Cards */}
-      {habits.length > 0 ? (
+      {visibleHabits.length > 0 ? (
         <div className="space-y-2">
-          {habits.map((habit) => (
+          {visibleHabits.map((habit) => (
             <TaskItem
               key={habit.id}
               habit={habit}
@@ -64,7 +82,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             className="px-3 py-1.5 bg-card-dark text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5 active:scale-95 transition"
           >
             <Plus className="w-3.5 h-3.5" />
-            Добавить
+            Добавить привычку
           </button>
         </div>
       )}

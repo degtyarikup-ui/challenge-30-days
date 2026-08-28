@@ -80,8 +80,8 @@ apiRouter.get('/state', (req: Request, res: Response) => {
   const violations = getViolations(selectedDate);
   const recentViolations = getViolations();
 
-  const serejaCompletedCount = activeHabits.filter(h => h.status_sereja.completed).length;
-  const leraCompletedCount = activeHabits.filter(h => h.status_lera.completed).length;
+  const serejaCompletedCount = activeHabits.filter(h => h.assigned_to !== 'lera' && h.status_sereja.completed).length;
+  const leraCompletedCount = activeHabits.filter(h => h.assigned_to !== 'sereja' && h.status_lera.completed).length;
 
   res.json({
     users,
@@ -146,7 +146,8 @@ apiRouter.post('/check', (req: Request, res: Response) => {
   // Check if this action completed all active habits for the day
   const { activeHabits } = getHabitsWithStatus(date);
   const userKey = userId === 'sereja' ? 'status_sereja' : 'status_lera';
-  const allDone = activeHabits.length > 0 && activeHabits.every(h => h[userKey].completed);
+  const relevantHabits = activeHabits.filter(h => h.assigned_to === 'both' || h.assigned_to === userId);
+  const allDone = relevantHabits.length > 0 && relevantHabits.every(h => h[userKey].completed);
 
   if (allDone && completed) {
     const user = getUser(userId);
@@ -199,7 +200,7 @@ apiRouter.post('/link-telegram', (req: Request, res: Response) => {
 
 // 6. Habits CRUD
 apiRouter.post('/habits', (req: Request, res: Response) => {
-  const { title, category, target_type, target_sereja, target_lera, unit } = req.body as Habit;
+  const { title, category, target_type, target_sereja, target_lera, unit, assigned_to } = req.body as Habit;
   if (!title || !category) {
     return res.status(400).json({ error: 'Title and category are required' });
   }
@@ -207,8 +208,8 @@ apiRouter.post('/habits', (req: Request, res: Response) => {
   const maxOrder = (db.prepare('SELECT MAX(order_index) as m FROM habits').get() as { m: number | null }).m || 0;
 
   const result = db.prepare(`
-    INSERT INTO habits (title, category, target_type, target_sereja, target_lera, unit, is_active, order_index)
-    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+    INSERT INTO habits (title, category, target_type, target_sereja, target_lera, unit, assigned_to, is_active, order_index)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
   `).run(
     title.trim(),
     category,
@@ -216,6 +217,7 @@ apiRouter.post('/habits', (req: Request, res: Response) => {
     target_sereja || '',
     target_lera || '',
     unit || '',
+    assigned_to || 'both',
     maxOrder + 1
   );
 
@@ -225,7 +227,7 @@ apiRouter.post('/habits', (req: Request, res: Response) => {
 
 apiRouter.put('/habits/:id', (req: Request, res: Response) => {
   const id = parseInt(req.params.id as string, 10);
-  const { title, target_type, target_sereja, target_lera, unit } = req.body;
+  const { title, target_type, target_sereja, target_lera, unit, assigned_to } = req.body;
 
   if (!title) {
     return res.status(400).json({ error: 'Title is required' });
@@ -237,9 +239,18 @@ apiRouter.put('/habits/:id', (req: Request, res: Response) => {
       target_type = ?,
       target_sereja = ?,
       target_lera = ?,
-      unit = ?
+      unit = ?,
+      assigned_to = ?
     WHERE id = ?
-  `).run(title.trim(), target_type || 'checkbox', target_sereja || '', target_lera || '', unit || '', id);
+  `).run(
+    title.trim(),
+    target_type || 'checkbox',
+    target_sereja || '',
+    target_lera || '',
+    unit || '',
+    assigned_to || 'both',
+    id
+  );
 
   sseManager.broadcast('state_updated', { type: 'habit_updated', id });
   res.json({ success: true });

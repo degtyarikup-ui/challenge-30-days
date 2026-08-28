@@ -39,9 +39,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const isPartnerDone = currentUserId === 'sereja' ? isLeraDone : isSerejaDone;
   const partnerName = currentUserId === 'sereja' ? 'Лера' : 'Серёжа';
 
+  const isBoth = !habit.assigned_to || habit.assigned_to === 'both';
   const myTarget = currentUserId === 'sereja' ? habit.target_sereja : habit.target_lera;
   const partnerTarget = currentUserId === 'sereja' ? habit.target_lera : habit.target_sereja;
-  const hasDistinctTargets = habit.target_sereja && habit.target_lera && habit.target_sereja !== habit.target_lera;
+  const hasDistinctTargets = isBoth && habit.target_sereja && habit.target_lera && habit.target_sereja !== habit.target_lera;
 
   // Long-press handlers
   const startLongPress = () => {
@@ -114,6 +115,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               <h3 className="text-sm sm:text-base font-bold tracking-tight truncate">
                 {habit.title}
               </h3>
+              {!isBoth && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  isMyDone ? 'bg-white/20 text-white' : 'bg-surface-muted text-text-muted'
+                }`}>
+                  Личная
+                </span>
+              )}
             </div>
 
             <div className="text-xs font-semibold mt-0.5">
@@ -136,8 +144,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
         {/* Right Side: Partner Done Badge + Custom Switch */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
-          {/* Partner Done Badge (ONLY shown when partner completed!) */}
-          {isPartnerDone && (
+          {/* Partner Done Badge (ONLY if assigned to both and partner completed) */}
+          {isBoth && isPartnerDone && (
             <div
               className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 transition-all duration-200 animate-in fade-in ${
                 isMyDone
