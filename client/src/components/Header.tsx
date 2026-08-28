@@ -1,16 +1,16 @@
 import React from 'react';
 import { UserId } from '../types';
-import { Calendar, SlidersHorizontal, Clock, Shield, ArrowLeftRight } from 'lucide-react';
+import { Calendar, SlidersHorizontal, Shield, ArrowLeftRight } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
 
 interface HeaderProps {
   currentUserId: UserId;
   userAvatarUrl?: string | null;
-  selectedDate: string;
-  actualDate: string;
-  yesterdayDate: string;
-  isGracePeriod: boolean;
-  onSelectDate: (date: string) => void;
+  selectedDate?: string;
+  actualDate?: string;
+  yesterdayDate?: string;
+  isGracePeriod?: boolean;
+  onSelectDate?: (date: string) => void;
   onOpenManageModal: () => void;
   onOpenHistoryModal: () => void;
   onOpenRulesModal: () => void;
@@ -20,68 +20,42 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentUserId,
   userAvatarUrl,
-  selectedDate,
-  actualDate,
-  yesterdayDate,
-  isGracePeriod,
-  onSelectDate,
   onOpenManageModal,
   onOpenHistoryModal,
   onOpenRulesModal,
   onSwitchUser,
 }) => {
-  const isViewingYesterday = selectedDate === yesterdayDate;
   const userName = currentUserId === 'sereja' ? 'Серёжа' : 'Лера';
   const initial = currentUserId === 'sereja' ? 'С' : 'Л';
 
   return (
     <header className="px-4 pt-3 pb-1 sm:px-6">
       <div className="max-w-xl mx-auto flex items-center justify-between">
-        {/* User Identity with Avatar & 1-tap switcher */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              triggerHaptic('light');
-              onSwitchUser?.();
-            }}
-            className="bg-card-dark hover:bg-black text-white pl-1.5 pr-3 py-1 rounded-full flex items-center gap-2 transition active:scale-95 shadow-none"
-            title="Нажмите, чтобы переключить профиль (Серёжа / Лера)"
-          >
-            {userAvatarUrl ? (
-              <img
-                src={userAvatarUrl}
-                alt={userName}
-                className="w-5 h-5 rounded-full object-cover border border-white/20"
-              />
-            ) : (
-              <div className="w-5 h-5 rounded-full bg-lime text-black flex items-center justify-center text-[10px] font-black">
-                {initial}
-              </div>
-            )}
-            <span className="text-xs font-bold tracking-wide">
-              {userName}
-            </span>
-            <ArrowLeftRight className="w-2.5 h-2.5 opacity-60 ml-0.5" />
-          </button>
-
-          {/* Grace Period Switch to Yesterday (if applicable) */}
-          {isGracePeriod && (
-            <button
-              onClick={() => {
-                triggerHaptic('light');
-                onSelectDate(isViewingYesterday ? actualDate : yesterdayDate);
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all duration-150 active:scale-95 ${
-                isViewingYesterday
-                  ? 'bg-lime text-black'
-                  : 'bg-white text-text-muted hover:text-text-black'
-              }`}
-            >
-              <Clock className="w-3 h-3" />
-              <span>{isViewingYesterday ? 'Вчера' : 'Закрыть вчера'}</span>
-            </button>
+        {/* User Identity with Avatar & 1-tap profile switcher */}
+        <button
+          onClick={() => {
+            triggerHaptic('light');
+            onSwitchUser?.();
+          }}
+          className="bg-card-dark hover:bg-black text-white pl-1.5 pr-3 py-1 rounded-full flex items-center gap-2 transition active:scale-95 shadow-none"
+          title="Нажмите, чтобы переключить профиль (Серёжа / Лера)"
+        >
+          {userAvatarUrl ? (
+            <img
+              src={userAvatarUrl}
+              alt={userName}
+              className="w-5 h-5 rounded-full object-cover border border-white/20"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-lime text-black flex items-center justify-center text-[10px] font-black">
+              {initial}
+            </div>
           )}
-        </div>
+          <span className="text-xs font-bold tracking-wide">
+            {userName}
+          </span>
+          <ArrowLeftRight className="w-2.5 h-2.5 opacity-60 ml-0.5" />
+        </button>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-1.5">

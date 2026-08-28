@@ -28,6 +28,7 @@ async function pushToCloud() {
     const violations = JSON.parse(localStorage.getItem('challenge_violations') || 'null');
     const startDate = localStorage.getItem('challenge_start_date') || '2026-08-31';
     const users = JSON.parse(localStorage.getItem('challenge_users') || 'null');
+    const avatars = JSON.parse(localStorage.getItem('challenge_avatars') || '{}');
 
     const payload = {
       name: 'challenge_state',
@@ -37,6 +38,7 @@ async function pushToCloud() {
         violations: violations || undefined,
         startDate,
         users: users || undefined,
+        avatars,
         lastUpdated: Date.now(),
       }
     };
@@ -75,6 +77,11 @@ async function pullFromCloud() {
         if (data.users) {
           localStorage.setItem('challenge_users', JSON.stringify(data.users));
         }
+        if (data.avatars) {
+          const localAvatars = JSON.parse(localStorage.getItem('challenge_avatars') || '{}');
+          const mergedAvatars = { ...localAvatars, ...data.avatars };
+          localStorage.setItem('challenge_avatars', JSON.stringify(mergedAvatars));
+        }
       }
     }
   } catch (e) {
@@ -100,10 +107,11 @@ function getLocalState(targetDate?: string): AppStateResponse {
   const violations: Violation[] = JSON.parse(violationsStr);
 
   const startDate = localStorage.getItem('challenge_start_date') || '2026-08-31';
+  const avatars = JSON.parse(localStorage.getItem('challenge_avatars') || '{}');
 
   const users: Record<UserId, User> = {
-    sereja: { id: 'sereja', name: 'Серёжа', telegram_id: null, current_streak: 1, max_streak: 1, challenge_start_date: startDate, avatar_color: '#3B82F6' },
-    lera: { id: 'lera', name: 'Лера', telegram_id: null, current_streak: 1, max_streak: 1, challenge_start_date: startDate, avatar_color: '#EC4899' },
+    sereja: { id: 'sereja', name: 'Серёжа', telegram_id: null, current_streak: 1, max_streak: 1, challenge_start_date: startDate, avatar_color: '#3B82F6', avatar_url: avatars.sereja || null },
+    lera: { id: 'lera', name: 'Лера', telegram_id: null, current_streak: 1, max_streak: 1, challenge_start_date: startDate, avatar_color: '#EC4899', avatar_url: avatars.lera || null },
   };
 
   const usersSaved = localStorage.getItem('challenge_users');
@@ -160,6 +168,7 @@ export async function authenticateUserApi(params: {
   telegramId?: string | number;
   username?: string;
   firstName?: string;
+  photoUrl?: string;
   manualUserId?: UserId;
 }): Promise<{ userId: UserId | null; requiresSelection?: boolean }> {
   try {
@@ -182,6 +191,14 @@ export async function authenticateUserApi(params: {
   } else if (params.manualUserId) {
     detectedId = params.manualUserId;
   }
+
+  if (detectedId && params.photoUrl) {
+    const avatars = JSON.parse(localStorage.getItem('challenge_avatars') || '{}');
+    avatars[detectedId] = params.photoUrl;
+    localStorage.setItem('challenge_avatars', JSON.stringify(avatars));
+    pushToCloud();
+  }
+
   return { userId: detectedId, requiresSelection: !detectedId };
 }
 

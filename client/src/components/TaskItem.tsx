@@ -168,8 +168,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Partner Done Badge + Custom Switch + Micro Confetti */}
-        <div className="flex items-center gap-2 flex-shrink-0 relative">
+        {/* Right Side: Partner Status Chip + Custom Switch + Micro Confetti */}
+        <div className="flex items-center gap-2.5 flex-shrink-0 relative">
           {/* Micro Confetti Sparks on completion */}
           {justCompleted && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
@@ -199,35 +199,51 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             </div>
           )}
 
-          {/* Partner Done Badge (with Avatar & Checkmark) */}
-          {isBoth && isPartnerDone && (
+          {/* Always Visible Partner Status Chip on Joint Habits */}
+          {isBoth && (
             <div
-              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
-                isMyDone
-                  ? 'bg-white text-black'
-                  : 'bg-card-dark text-lime border border-lime/30'
+              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 ${
+                isPartnerDone
+                  ? isMyDone
+                    ? 'bg-white text-black font-black'
+                    : 'bg-card-dark text-lime font-black'
+                  : isMyDone
+                    ? 'bg-white/15 text-white/75'
+                    : 'bg-surface-muted text-text-muted'
               }`}
-              title={`${partnerName} выполнил(а) цель`}
+              title={isPartnerDone ? `${partnerName} выполнил(а) цель` : `${partnerName} еще не выполнил(а)`}
             >
               {partnerAvatarUrl ? (
                 <img
                   src={partnerAvatarUrl}
                   alt={partnerName}
-                  className="w-4 h-4 rounded-full object-cover"
+                  className="w-4 h-4 rounded-full object-cover border border-white/20"
                 />
               ) : (
-                <div className="w-4 h-4 rounded-full bg-lime text-black flex items-center justify-center text-[9px] font-black">
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black ${
+                  isPartnerDone
+                    ? isMyDone
+                      ? 'bg-lime text-black'
+                      : 'bg-lime text-black'
+                    : isMyDone
+                      ? 'bg-white/20 text-white'
+                      : 'bg-text-muted/20 text-text-black'
+                }`}>
                   {partnerInitial}
                 </div>
               )}
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-1">
                 <span>{partnerName}</span>
-                <Check className="w-3 h-3 stroke-[3]" />
+                {isPartnerDone ? (
+                  <Check className="w-3 h-3 stroke-[3]" />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
+                )}
               </div>
             </div>
           )}
 
-          {/* Toggle Switch */}
+          {/* Toggle Switch for Current User */}
           <div
             className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 ease-out flex items-center pointer-events-none ${
               isMyDone ? 'bg-lime justify-end' : 'bg-surface-subtle justify-start'
