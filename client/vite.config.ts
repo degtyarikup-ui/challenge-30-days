@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/challenge-30-days/',
   server: {
     port: 5173,
     host: '0.0.0.0',
