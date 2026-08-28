@@ -168,7 +168,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Partner Status Chip + Custom Switch + Micro Confetti */}
+        {/* Right Side: Partner Done Badge + Custom Switch + Micro Confetti */}
         <div className="flex items-center gap-2.5 flex-shrink-0 relative">
           {/* Micro Confetti Sparks on completion */}
           {justCompleted && (
@@ -199,19 +199,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             </div>
           )}
 
-          {/* Always Visible Partner Status Chip on Joint Habits */}
-          {isBoth && (
+          {/* Partner Done Badge: ONLY visible when partner has completed the goal */}
+          {isBoth && isPartnerDone && (
             <div
-              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all duration-200 ${
-                isPartnerDone
-                  ? isMyDone
-                    ? 'bg-white text-black font-black'
-                    : 'bg-card-dark text-lime font-black'
-                  : isMyDone
-                    ? 'bg-white/15 text-white/75'
-                    : 'bg-surface-muted text-text-muted'
+              className={`pl-1.5 pr-2.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 transition-all duration-200 animate-in fade-in ${
+                isMyDone
+                  ? 'bg-white text-black'
+                  : 'bg-card-dark text-lime border border-lime/30'
               }`}
-              title={isPartnerDone ? `${partnerName} выполнил(а) цель` : `${partnerName} еще не выполнил(а)`}
+              title={`${partnerName} выполнил(а) цель`}
             >
               {partnerAvatarUrl ? (
                 <img
@@ -220,25 +216,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   className="w-4 h-4 rounded-full object-cover border border-white/20"
                 />
               ) : (
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black ${
-                  isPartnerDone
-                    ? isMyDone
-                      ? 'bg-lime text-black'
-                      : 'bg-lime text-black'
-                    : isMyDone
-                      ? 'bg-white/20 text-white'
-                      : 'bg-text-muted/20 text-text-black'
-                }`}>
+                <div className="w-4 h-4 rounded-full bg-lime text-black flex items-center justify-center text-[9px] font-black">
                   {partnerInitial}
                 </div>
               )}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <span>{partnerName}</span>
-                {isPartnerDone ? (
-                  <Check className="w-3 h-3 stroke-[3]" />
-                ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
-                )}
+                <Check className="w-3 h-3 stroke-[3]" />
               </div>
             </div>
           )}
