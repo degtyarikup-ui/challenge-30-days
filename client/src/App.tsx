@@ -24,6 +24,7 @@ import { ManageTasksModal } from './components/ManageTasksModal';
 import { TaskContextMenuModal } from './components/TaskContextMenuModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
 import { RefreshCw, User, Clock } from 'lucide-react';
+import { getChallengeDay } from './utils/date';
 
 export const App: React.FC = () => {
   const [state, setState] = useState<AppStateResponse | null>(null);
@@ -401,6 +402,8 @@ export const App: React.FC = () => {
         <StreakTracker
           users={state.users}
           currentUserId={currentUserId}
+          selectedDate={selectedDate}
+          actualDate={state.actualDate}
           startDate={state.startDate}
           daysUntilStart={state.daysUntilStart}
         />
@@ -427,7 +430,7 @@ export const App: React.FC = () => {
       <FullScreenCelebration
         isOpen={isFullScreenCelebrationOpen}
         onClose={() => setIsFullScreenCelebrationOpen(false)}
-        dayNumber={state.users[currentUserId]?.current_streak || 1}
+        dayNumber={getChallengeDay(selectedDate || state.actualDate, state.startDate)}
       />
 
       {/* Context Menu Modal (On Long Press) */}

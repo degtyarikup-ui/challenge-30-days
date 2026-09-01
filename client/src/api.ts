@@ -1,4 +1,5 @@
 import { AppStateResponse, Habit, HistoryDay, UserId, HabitWithStatus, Violation, User } from './types';
+import { formatLocalDate, getYesterdayLocalDate, calculateUserStreaks } from './utils/date';
 
 const API_BASE = '/api';
 const CLOUD_SYNC_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b11001a04a3f6b575799';
@@ -91,11 +92,9 @@ async function pullFromCloud() {
 
 function getLocalState(targetDate?: string): AppStateResponse {
   const now = new Date();
-  const actualDate = now.toISOString().split('T')[0];
+  const actualDate = formatLocalDate(now);
   const date = targetDate || actualDate;
-
-  const yDate = new Date(now.getTime() - 86400000);
-  const yesterdayDate = yDate.toISOString().split('T')[0];
+  const yesterdayDate = getYesterdayLocalDate(now);
 
   const habitsStr = localStorage.getItem('challenge_habits');
   const habits: Habit[] = habitsStr ? JSON.parse(habitsStr) : DEFAULT_HABITS;
@@ -109,20 +108,44 @@ function getLocalState(targetDate?: string): AppStateResponse {
   const startDate = localStorage.getItem('challenge_start_date') || '2026-08-31';
   const avatars = JSON.parse(localStorage.getItem('challenge_avatars') || '{}');
 
+  const serejaStreaks = calculateUserStreaks('sereja', logs, habits, startDate, actualDate);
+  const leraStreaks = calculateUserStreaks('lera', logs, habits, startDate, actualDate);
+
   const users: Record<UserId, User> = {
-    sereja: { id: 'sereja', name: 'Серёжа', telegram_id: null, current_streak: 1, max_streak: 1, challenge_start_date: startDate, avatar_color: '#3B82F6', avatar_url: avatars.sereja || null },
-    lera: { id: 'lera', name: 'Лера', telegram_id: null, current_streak: 1, max_streak: 1, challenge_start_date: startDate, avatar_color: '#EC4899', avatar_url: avatars.lera || null },
+    sereja: {
+      id: 'sereja',
+      name: 'Серёжа',
+      telegram_id: null,
+      current_streak: serejaStreaks.currentStreak,
+      max_streak: serejaStreaks.maxStreak,
+      challenge_start_date: startDate,
+      avatar_color: '#3B82F6',
+      avatar_url: avatars.sereja || null,
+    },
+    lera: {
+      id: 'lera',
+      name: 'Лера',
+      telegram_id: null,
+      current_streak: leraStreaks.currentStreak,
+      max_streak: leraStreaks.maxStreak,
+      challenge_start_date: startDate,
+      avatar_color: '#EC4899',
+      avatar_url: avatars.lera || null,
+    },
   };
 
   const usersSaved = localStorage.getItem('challenge_users');
   if (usersSaved) {
     Object.assign(users, JSON.parse(usersSaved));
+    // Ensure streaks reflect the actual challenge progress
+    users.sereja.current_streak = Math.max(users.sereja.current_streak, serejaStreaks.currentStreak);
+    users.lera.current_streak = Math.max(users.lera.current_streak, leraStreaks.currentStreak);
   }
 
   const activeHabits: HabitWithStatus[] = [];
   const passiveRules: Habit[] = [];
 
-  for (const h of habits.filter(h => h.is_active !== 0)) {
+  for (const h of habits.filter((h) => h.is_active !== 0)) {
     if (h.category === 'active') {
       activeHabits.push({
         ...h,
@@ -138,10 +161,6 @@ function getLocalState(targetDate?: string): AppStateResponse {
     }
   }
 
-  const todayMs = new Date(actualDate).getTime();
-  const startMs = new Date(startDate).getTime();
-  const diffDays = Math.round((startMs - todayMs) / (1000 * 60 * 60 * 24));
-
   return {
     users,
     date,
@@ -150,17 +169,17 @@ function getLocalState(targetDate?: string): AppStateResponse {
     isGracePeriod: now.getHours() < 12,
     gracePeriodDeadline: '12:00',
     startDate,
-    daysUntilStart: diffDays,
+    daysUntilStart: 0,
     habits: activeHabits,
     passiveRules,
-    violations: violations.filter(v => v.date === date),
+    violations: violations.filter((v) => v.date === date),
     recentViolations: violations.slice(0, 10),
     stats: {
       totalDays: 30,
-      serejaCompletedCountToday: activeHabits.filter(h => h.assigned_to !== 'lera' && h.status_sereja.completed).length,
-      leraCompletedCountToday: activeHabits.filter(h => h.assigned_to !== 'sereja' && h.status_lera.completed).length,
+      serejaCompletedCountToday: activeHabits.filter((h) => h.assigned_to !== 'lera' && h.status_sereja.completed).length,
+      leraCompletedCountToday: activeHabits.filter((h) => h.assigned_to !== 'sereja' && h.status_lera.completed).length,
       totalActiveHabits: activeHabits.length,
-    }
+    },
   };
 }
 
@@ -336,7 +355,7 @@ export async function updateHabitApi(id: number, habit: Partial<Habit>): Promise
 
   const habitsStr = localStorage.getItem('challenge_habits');
   const habits: Habit[] = habitsStr ? JSON.parse(habitsStr) : [...DEFAULT_HABITS];
-  const idx = habits.findIndex(h => h.id === id);
+  const idx = habits.findIndex((h) => h.id === id);
   if (idx !== -1) {
     habits[idx] = { ...habits[idx], ...habit };
     localStorage.setItem('challenge_habits', JSON.stringify(habits));
@@ -357,7 +376,7 @@ export async function deleteHabitApi(id: number): Promise<{ success: boolean }> 
 
   const habitsStr = localStorage.getItem('challenge_habits');
   const habits: Habit[] = habitsStr ? JSON.parse(habitsStr) : [...DEFAULT_HABITS];
-  const filtered = habits.filter(h => h.id !== id);
+  const filtered = habits.filter((h) => h.id !== id);
   localStorage.setItem('challenge_habits', JSON.stringify(filtered));
   pushToCloud();
   return { success: true };

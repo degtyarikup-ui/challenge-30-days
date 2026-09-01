@@ -1,10 +1,13 @@
 import React from 'react';
 import { User, UserId } from '../types';
 import { CheckCircle2 } from 'lucide-react';
+import { getChallengeDay } from '../utils/date';
 
 interface StreakTrackerProps {
   users: Record<UserId, User>;
   currentUserId: UserId;
+  selectedDate?: string;
+  actualDate?: string;
   startDate?: string;
   daysUntilStart?: number;
 }
@@ -12,19 +15,26 @@ interface StreakTrackerProps {
 export const StreakTracker: React.FC<StreakTrackerProps> = ({
   users,
   currentUserId,
+  selectedDate,
+  actualDate,
+  startDate = '2026-08-31',
 }) => {
   const sereja = users.sereja || { current_streak: 1, max_streak: 1, name: 'Серёжа' };
   const lera = users.lera || { current_streak: 1, max_streak: 1, name: 'Лера' };
 
   const myUser = currentUserId === 'sereja' ? sereja : lera;
 
+  // Calculate the day number of the challenge for the currently viewed / actual date
+  const effectiveDate = selectedDate || actualDate || startDate;
+  const challengeDay = getChallengeDay(effectiveDate, startDate);
+
   return (
-    <div className="bg-lime text-black rounded-3xl p-5 relative overflow-hidden transition-all">
+    <div className="bg-lime text-black rounded-3xl p-5 relative overflow-hidden transition-all shadow-none">
       {/* Top: Large Counter & Status Icon */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-baseline gap-2">
           <span className="text-4xl sm:text-5xl font-black tracking-tight text-black">
-            День {myUser.current_streak}
+            День {challengeDay}
           </span>
           <span className="text-base font-bold text-black/60">/ 30</span>
         </div>
