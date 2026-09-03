@@ -25,8 +25,8 @@ import { ViolationModal } from './components/ViolationModal';
 import { ManageTasksModal } from './components/ManageTasksModal';
 import { TaskContextMenuModal } from './components/TaskContextMenuModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
-import { RefreshCw, User, Clock } from 'lucide-react';
-import { getChallengeDay } from './utils/date';
+import { RefreshCw, User, Clock, Pencil } from 'lucide-react';
+import { getChallengeDay, formatDateRu, formatDayLabel } from './utils/date';
 
 export const App: React.FC = () => {
   const [state, setState] = useState<AppStateResponse | null>(null);
@@ -301,7 +301,8 @@ export const App: React.FC = () => {
     );
   }
 
-  const isPastDate = selectedDate !== state.actualDate;
+  const isPastDate = selectedDate < state.actualDate;
+  const isFutureDate = selectedDate > state.actualDate;
   const isGracePeriodActiveForPast = isPastDate && selectedDate === state.yesterdayDate && state.isGracePeriod;
 
   // Check if all habits for current user are done
@@ -399,16 +400,55 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Other Past Date Indicator */}
-        {isPastDate && !isGracePeriodActiveForPast && (
-          <div className="bg-white rounded-2xl p-3 text-xs font-bold text-text-black flex items-center justify-between">
-            <span>Просмотр дня: {selectedDate}</span>
-            <button
-              onClick={() => handleDateChange(state.actualDate)}
-              className="text-black underline font-extrabold"
-            >
-              Вернуться на сегодня
-            </button>
+        {/* Past / future day banner with a picker for any date */}
+        {(isPastDate || isFutureDate) && !isGracePeriodActiveForPast && (
+          <div className="bg-white rounded-2xl p-3 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <Pencil className={`w-3.5 h-3.5 flex-shrink-0 ${isFutureDate ? 'text-text-muted' : 'text-text-black'}`} />
+                <span className="text-xs font-bold text-text-black truncate">
+                  {isFutureDate
+                    ? `Будущий день: ${formatDateRu(selectedDate)}`
+                    : `Правка дня: ${formatDayLabel(selectedDate, state.actualDate)}`}
+                </span>
+              </div>
+              <button
+                onClick={() => handleDateChange(state.actualDate)}
+                className="text-black underline font-extrabold text-xs flex-shrink-0"
+              >
+                На сегодня
+              </button>
+            </div>
+
+            <p className="text-[11px] font-semibold text-text-muted">
+              {isFutureDate
+                ? 'Будущие дни отмечать нельзя.'
+                : 'Отметки за этот день можно менять — исправьте, что забыли.'}
+            </p>
+
+            <input
+              type="date"
+              value={selectedDate}
+              max={state.actualDate}
+              onChange={(e) => e.target.value && handleDateChange(e.target.value)}
+              className="w-full bg-surface-muted rounded-xl px-3 py-2 text-xs font-bold text-text-black outline-none focus:ring-2 focus:ring-lime"
+            />
+          </div>
+        )}
+
+        {!isPastDate && !isFutureDate && (
+          <div className="flex items-center justify-end">
+            <label className="flex items-center gap-2 text-[11px] font-bold text-text-muted cursor-pointer">
+              <Pencil className="w-3 h-3" />
+              <span>Поправить прошлый день</span>
+              <input
+                type="date"
+                value={selectedDate}
+                max={state.actualDate}
+                onChange={(e) => e.target.value && handleDateChange(e.target.value)}
+                className="bg-white rounded-lg px-2 py-1 text-[11px] font-bold text-text-black outline-none focus:ring-2 focus:ring-lime cursor-pointer"
+              />
+            </label>
           </div>
         )}
 
@@ -436,7 +476,7 @@ export const App: React.FC = () => {
             setInitialEditingHabit(null);
             setIsManageModalOpen(true);
           }}
-          disabled={isPastDate && !isGracePeriodActiveForPast}
+          disabled={isFutureDate}
         />
       </main>
 

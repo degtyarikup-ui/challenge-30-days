@@ -25,16 +25,27 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({
   // Calculate the day number of the challenge for the currently viewed / actual date
   const effectiveDate = selectedDate || actualDate || startDate;
   const challengeDay = getChallengeDay(effectiveDate, startDate);
+  // Days before the challenge began are not "День 1" — say so plainly rather
+  // than showing a number that isn't real.
+  const isBeforeStart = !!effectiveDate && !!startDate && effectiveDate < startDate;
 
   return (
     <div className="bg-lime text-black rounded-3xl p-5 relative overflow-hidden transition-all shadow-none">
       {/* Top: Large Counter & Status Icon */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl sm:text-5xl font-black tracking-tight text-black">
-            День {challengeDay}
-          </span>
-          <span className="text-base font-bold text-black/60">/ 30</span>
+          {isBeforeStart ? (
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-black">
+              До старта
+            </span>
+          ) : (
+            <>
+              <span className="text-4xl sm:text-5xl font-black tracking-tight text-black">
+                День {challengeDay}
+              </span>
+              <span className="text-base font-bold text-black/60">/ 30</span>
+            </>
+          )}
         </div>
 
         <div className="w-9 h-9 rounded-full bg-white/80 flex items-center justify-center text-black">

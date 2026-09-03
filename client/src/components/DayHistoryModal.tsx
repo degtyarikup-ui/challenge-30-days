@@ -126,7 +126,7 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
                       {formatDayLabel(day.date, actualDate)}
                     </div>
                     <div className="text-[11px] font-semibold text-text-muted">
-                      День {getChallengeDay(day.date, startDate)}
+                      {day.date < startDate ? 'До старта' : `День ${getChallengeDay(day.date, startDate)}`}
                     </div>
                   </div>
 
