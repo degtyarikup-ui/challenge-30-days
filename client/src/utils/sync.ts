@@ -1,4 +1,5 @@
 import { Habit, Violation } from '../types';
+import { callSyncState, docToPayload } from './supabase';
 
 /**
  * Cloud sync layer.
@@ -13,10 +14,6 @@ import { Habit, Violation } from '../types';
  *    resurrect values the partner has since changed.
  *  - tombstoned for deletes, otherwise a deleted habit reappears on next pull.
  */
-
-const CLOUD_BASE = 'https://api.restful-api.dev/objects';
-const CLOUD_ID = 'ff8081819ff5b11001a04a3f6b575799';
-export const CLOUD_URL = `${CLOUD_BASE}/${CLOUD_ID}`;
 
 const STORAGE_KEY = 'challenge_state_v2';
 
@@ -179,30 +176,6 @@ export function mergeDocs(a: SyncDoc, b: SyncDoc): SyncDoc {
   };
 }
 
-/**
- * Flat view matching the pre-v2 payload. Written next to the v2 document so an
- * un-updated device keeps reading its data instead of seeing an empty day, and
- * (importantly) does not interpret `{c,val,t}` objects as "always completed".
- */
-function legacyMirror(doc: SyncDoc) {
-  const logs: Record<string, boolean> = {};
-  for (const [key, entry] of Object.entries(doc.logs)) logs[key] = entry.c;
-
-  const avatars: Record<string, string> = {};
-  for (const [uid, p] of Object.entries(doc.profiles)) {
-    if (p.avatar_url) avatars[uid] = p.avatar_url;
-  }
-
-  return {
-    logs,
-    habits: Object.values(doc.habits).filter((e) => !e.del).map((e) => e.h),
-    violations: Object.values(doc.violations).filter((e) => !e.del).map((e) => e.v),
-    startDate: doc.settings.startDate?.val || DEFAULT_START_DATE,
-    avatars,
-    lastUpdated: doc.lastUpdated,
-  };
-}
-
 // ---------------------------------------------------------------- local store
 
 let cache: SyncDoc | null = null;
@@ -297,10 +270,7 @@ function notifyChanged() {
 }
 
 async function fetchRemote(signal?: AbortSignal): Promise<SyncDoc | null> {
-  const res = await fetch(`${CLOUD_URL}?_=${Date.now()}`, { cache: 'no-store', signal });
-  if (!res.ok) return null;
-  const body = await res.json();
-  return coerceDoc(body?.data);
+  return callSyncState({}, signal);
 }
 
 /**
@@ -348,26 +318,20 @@ export async function pullFromCloud(): Promise<boolean> {
 }
 
 /**
- * Read-merge-write. Re-reading the remote immediately before the PUT is what
- * stops the two devices from erasing each other — the previous code PUT the
- * local blob blind, which is exactly how Sereja's logs disappeared.
+ * Send local records and take back the authoritative state. The database
+ * resolves conflicts per record, so this cannot erase the partner's data even
+ * if both phones push at the same moment.
  */
 async function pushOnce(): Promise<boolean> {
-  const remote = await fetchRemote().catch(() => null);
-  const merged = remote ? mergeDocs(readLocal(), remote) : readLocal();
+  const local = readLocal();
+  const remote = await callSyncState(docToPayload(local));
+
+  const merged = mergeDocs(local, remote);
   seedHabits(merged);
   writeLocal(merged);
-
-  const res = await fetch(CLOUD_URL, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: 'challenge_state',
-      data: { ...legacyMirror(merged), doc: merged },
-    }),
-  });
-  return res.ok;
+  return true;
 }
+
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pushInFlight = false;
