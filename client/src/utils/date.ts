@@ -1,4 +1,4 @@
-import { UserId, Habit } from '../types';
+import { UserId } from '../types';
 
 export function formatLocalDate(d: Date = new Date()): string {
   const year = d.getFullYear();
@@ -13,70 +13,103 @@ export function getYesterdayLocalDate(d: Date = new Date()): string {
   return formatLocalDate(yesterday);
 }
 
-export function getChallengeDay(targetDate: string, startDate: string): number {
-  if (!targetDate || !startDate) return 1;
-  const [ty, tm, td] = targetDate.split('-').map(Number);
-  const [sy, sm, sd] = startDate.split('-').map(Number);
-  const targetMs = new Date(ty, tm - 1, td).getTime();
-  const startMs = new Date(sy, sm - 1, sd).getTime();
-  const diffDays = Math.floor((targetMs - startMs) / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return 1;
-  return Math.min(30, diffDays + 1);
+/** Parses YYYY-MM-DD as a local (not UTC) midnight, so DST never shifts a day. */
+export function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
+export function addDays(dateStr: string, days: number): string {
+  const d = parseLocalDate(dateStr);
+  d.setDate(d.getDate() + days);
+  return formatLocalDate(d);
+}
+
+export function daysBetween(fromDate: string, toDate: string): number {
+  const from = parseLocalDate(fromDate);
+  const to = parseLocalDate(toDate);
+  return Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+export function getChallengeDay(targetDate: string, startDate: string, totalDays = 30): number {
+  if (!targetDate || !startDate) return 1;
+  const diffDays = daysBetween(startDate, targetDate);
+  if (diffDays < 0) return 1;
+  return Math.min(totalDays, diffDays + 1);
+}
+
+export function formatDateRu(dateStr: string): string {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+const WEEKDAYS_RU = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+
+export function formatDayLabel(dateStr: string, actualDate: string): string {
+  if (dateStr === actualDate) return 'Сегодня';
+  if (dateStr === getYesterdayLocalDate(parseLocalDate(actualDate))) return 'Вчера';
+  const d = parseLocalDate(dateStr);
+  return `${formatDateRu(dateStr)}, ${WEEKDAYS_RU[d.getDay()]}`;
+}
+
+export interface StreakResult {
+  currentStreak: number;
+  maxStreak: number;
+  completedDays: number;
+}
+
+/**
+ * Consecutive fully-completed days ending at (or just before) today.
+ *
+ * Today counts only once it is actually complete, but an incomplete today does
+ * NOT break the streak — the day is still in progress. A violation on a date
+ * breaks the streak at that date regardless of habit checkmarks.
+ *
+ * Both devices run this over the same merged log set, so both must arrive at
+ * the same number. The old implementation fell back to "days since start" when
+ * the streak was zero, which is why the two phones disagreed.
+ */
 export function calculateUserStreaks(
   userId: UserId,
-  logs: Record<string, boolean>,
-  habits: Habit[],
+  isDayComplete: (userId: UserId, date: string) => boolean,
   startDate: string,
-  actualDate: string
-): { currentStreak: number; maxStreak: number } {
-  if (!startDate || !actualDate) return { currentStreak: 1, maxStreak: 1 };
+  actualDate: string,
+  violationDates: Set<string> = new Set()
+): StreakResult {
+  const empty: StreakResult = { currentStreak: 0, maxStreak: 0, completedDays: 0 };
+  if (!startDate || !actualDate) return empty;
 
-  const [sy, sm, sd] = startDate.split('-').map(Number);
-  const [ay, am, ad] = actualDate.split('-').map(Number);
+  const totalDays = daysBetween(startDate, actualDate) + 1;
+  if (totalDays <= 0) return empty;
 
-  const start = new Date(sy, sm - 1, sd);
-  const current = new Date(ay, am - 1, ad);
-
-  if (current.getTime() < start.getTime()) {
-    return { currentStreak: 1, maxStreak: 1 };
-  }
-
-  const activeHabits = habits.filter(
-    (h) => h.category === 'active' && (!h.assigned_to || h.assigned_to === 'both' || h.assigned_to === userId)
-  );
-
-  let currentStreak = 0;
-  let maxStreak = 0;
   let runningStreak = 0;
-
-  const totalDays = Math.floor((current.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  let maxStreak = 0;
+  let currentStreak = 0;
+  let completedDays = 0;
 
   for (let i = 0; i < totalDays; i++) {
-    const dayDate = new Date(start);
-    dayDate.setDate(dayDate.getDate() + i);
-    const dateStr = formatLocalDate(dayDate);
+    const dateStr = addDays(startDate, i);
     const isToday = dateStr === actualDate;
+    const brokenByViolation = violationDates.has(dateStr);
+    const done = !brokenByViolation && isDayComplete(userId, dateStr);
 
-    const allDone =
-      activeHabits.length > 0 &&
-      activeHabits.every((h) => !!logs[`${h.id}_${userId}_${dateStr}`]);
-
-    if (allDone) {
+    if (done) {
       runningStreak += 1;
+      completedDays += 1;
       if (runningStreak > maxStreak) maxStreak = runningStreak;
-    } else if (isToday) {
-      // If today is in progress, do not break streak yet
+    } else if (isToday && !brokenByViolation) {
+      // Today is still open — hold the streak without extending it.
     } else {
       runningStreak = 0;
     }
+
+    if (isToday) currentStreak = runningStreak;
   }
 
-  // Current challenge progress day or consecutive completed days (minimum 1)
-  const challengeDay = getChallengeDay(actualDate, startDate);
-  currentStreak = Math.max(1, runningStreak > 0 ? runningStreak : challengeDay);
-  maxStreak = Math.max(maxStreak, currentStreak);
+  return { currentStreak, maxStreak, completedDays };
+}
 
-  return { currentStreak, maxStreak };
+export function isGracePeriodNow(d: Date = new Date()): boolean {
+  return d.getHours() < 12;
 }

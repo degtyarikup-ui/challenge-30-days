@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { db, getUser, getUsers, resetStreak, updateStreak } from './db.js';
+import { db, getUser, getUsers, resetStreak, updateStreak, getActiveHabitsFor, countCompletedActive } from './db.js';
 import { broadcastTelegram } from './bot.js';
 import { formatDate } from './dateUtils.js';
 import { UserId } from './types.js';
@@ -35,13 +35,11 @@ export function evaluateYesterdayResults() {
     // Check violations yesterday
     const violationsCount = (db.prepare('SELECT COUNT(*) as c FROM violations WHERE user_id = ? AND date = ?').get(userId, yesterdayStr) as { c: number }).c;
     
-    // Check completed active habits yesterday
-    const completedCount = (db.prepare(`
-      SELECT COUNT(*) as c FROM habit_logs 
-      WHERE user_id = ? AND date = ? AND completed = 1 AND habit_id IN (SELECT id FROM habits WHERE category = 'active' AND is_active = 1)
-    `).get(userId, yesterdayStr) as { c: number }).c;
+    // Check completed active habits yesterday (only those assigned to this user)
+    const myHabits = getActiveHabitsFor(userId);
+    const completedCount = countCompletedActive(userId, yesterdayStr);
 
-    const allCompleted = activeHabits.length > 0 && completedCount === activeHabits.length && violationsCount === 0;
+    const allCompleted = myHabits.length > 0 && completedCount === myHabits.length && violationsCount === 0;
 
     // Record summary
     db.prepare(`
@@ -89,17 +87,15 @@ async function sendEveningReminders() {
   for (const user of Object.values(users)) {
     if (!user.telegram_id) continue;
 
-    const completed = (db.prepare(`
-      SELECT COUNT(*) as c FROM habit_logs 
-      WHERE user_id = ? AND date = ? AND completed = 1
-    `).get(user.id, todayStr) as { c: number }).c;
+    const myHabits = getActiveHabitsFor(user.id);
+    const completed = countCompletedActive(user.id, todayStr);
 
-    const remaining = activeHabits.length - completed;
+    const remaining = myHabits.length - completed;
     if (remaining > 0) {
       try {
         await broadcastTelegram(
           `🔔 *Напоминание на вечер для ${user.name}:*\n` +
-          `Осталось выполнить задач на сегодня: *${remaining} из ${activeHabits.length}*.\n` +
+          `Осталось выполнить задач на сегодня: *${remaining} из ${myHabits.length}*.\n` +
           `Не забудьте отметить до сна или утром до 12:00! 🔥`
         );
       } catch (err) {

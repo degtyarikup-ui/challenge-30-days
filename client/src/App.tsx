@@ -10,6 +10,8 @@ import {
   authenticateUserApi,
   updateStartDateApi,
   subscribeToEvents,
+  setProfileAvatar,
+  onSyncStatusChange,
 } from './api';
 import { initTelegramApp, getTelegramUser, triggerHaptic } from './utils/telegram';
 import { playAllDoneSound, playWarningSound } from './utils/audio';
@@ -48,6 +50,9 @@ export const App: React.FC = () => {
   const [contextMenuHabit, setContextMenuHabit] = useState<HabitWithStatus | null>(null);
   const [initialEditingHabit, setInitialEditingHabit] = useState<Habit | null>(null);
   const [isFullScreenCelebrationOpen, setIsFullScreenCelebrationOpen] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+
+  useEffect(() => onSyncStatusChange((s) => setSyncStatus(s)), []);
 
   // Load App State
   const loadData = useCallback(async (date?: string) => {
@@ -65,7 +70,7 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  // Initialize Auth & Data
+  // Initialize Auth & Data (mount only)
   useEffect(() => {
     initTelegramApp();
     const tgUser = getTelegramUser();
@@ -84,7 +89,7 @@ export const App: React.FC = () => {
             setCurrentUserId(authRes.userId);
             localStorage.setItem('challenge_user_id', authRes.userId);
             if (tgUser.photo_url) {
-              localStorage.setItem(`avatar_${authRes.userId}`, tgUser.photo_url);
+              setProfileAvatar(authRes.userId, tgUser.photo_url);
             }
             setShowUserSetup(false);
           } else if (!currentUserId) {
@@ -102,41 +107,42 @@ export const App: React.FC = () => {
     };
 
     initAuth();
+  }, [loadData]);
 
-    // SSE Realtime Subscription with Granular Non-Blocking Updates
+  // Realtime subscription. Mount-only: re-subscribing on every profile switch
+  // used to leak an EventSource / poll timer per switch.
+  useEffect(() => {
     const unsubscribe = subscribeToEvents((event) => {
-      if (event && event.type === 'habit_toggled') {
-        const currentDate = selectedDateRef.current;
-        if (event.date === currentDate) {
-          setState((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              habits: prev.habits.map((h) => {
-                if (h.id === event.habitId) {
-                  return {
+      if (event && event.type === 'habit_toggled' && event.date === selectedDateRef.current) {
+        // Granular patch keeps the toggle animation from flickering.
+        setState((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            habits: prev.habits.map((h) =>
+              h.id === event.habitId
+                ? {
                     ...h,
                     [event.userId === 'sereja' ? 'status_sereja' : 'status_lera']: {
                       completed: event.completed,
                       value: event.value || null,
                     },
-                  };
-                }
-                return h;
-              }),
-            };
-          });
-        }
+                  }
+                : h
+            ),
+          };
+        });
       } else {
-        // Full refresh for violations, start date changes, or CRUD
-        loadData(selectedDateRef.current);
+        // cloud_sync, violations, start date and CRUD all need a full rebuild.
+        loadData(selectedDateRef.current || undefined);
       }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [loadData, currentUserId]);
+  }, [loadData]);
+
 
   const handleSelectInitialUser = async (userId: UserId) => {
     setCurrentUserId(userId);
@@ -146,7 +152,7 @@ export const App: React.FC = () => {
     const tgUser = getTelegramUser();
     if (tgUser) {
       if (tgUser.photo_url) {
-        localStorage.setItem(`avatar_${userId}`, tgUser.photo_url);
+        setProfileAvatar(userId, tgUser.photo_url);
       }
       await authenticateUserApi({
         telegramId: tgUser.id,
@@ -308,8 +314,8 @@ export const App: React.FC = () => {
   // Avatar URLs
   const tgUser = getTelegramUser();
   const partnerId: UserId = currentUserId === 'sereja' ? 'lera' : 'sereja';
-  const userAvatarUrl = tgUser?.photo_url || localStorage.getItem(`avatar_${currentUserId}`) || state.users[currentUserId]?.avatar_url || null;
-  const partnerAvatarUrl = localStorage.getItem(`avatar_${partnerId}`) || state.users[partnerId]?.avatar_url || null;
+  const userAvatarUrl = tgUser?.photo_url || state.users[currentUserId]?.avatar_url || null;
+  const partnerAvatarUrl = state.users[partnerId]?.avatar_url || null;
 
   return (
     <div className="min-h-screen bg-background text-text-black pb-8 flex flex-col selection:bg-lime selection:text-black">
@@ -333,6 +339,14 @@ export const App: React.FC = () => {
           setIsRulesModalOpen(true);
         }}
       />
+
+      {syncStatus === 'error' && (
+        <div className="max-w-xl w-full mx-auto px-4 sm:px-6 pt-1">
+          <div className="bg-danger/10 text-danger rounded-2xl px-3.5 py-2 text-xs font-bold">
+            Нет связи с облаком — отметки сохранены локально и отправятся автоматически.
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-xl w-full mx-auto px-4 sm:px-6 py-2 space-y-3.5 flex-1">
@@ -485,6 +499,8 @@ export const App: React.FC = () => {
         isOpen={isHistoryModalOpen}
         onClose={() => setIsHistoryModalOpen(false)}
         onSelectDate={handleDateChange}
+        actualDate={state.actualDate}
+        startDate={state.startDate}
       />
     </div>
   );

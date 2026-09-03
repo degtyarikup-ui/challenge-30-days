@@ -22,8 +22,6 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({
   const sereja = users.sereja || { current_streak: 1, max_streak: 1, name: 'Серёжа' };
   const lera = users.lera || { current_streak: 1, max_streak: 1, name: 'Лера' };
 
-  const myUser = currentUserId === 'sereja' ? sereja : lera;
-
   // Calculate the day number of the challenge for the currently viewed / actual date
   const effectiveDate = selectedDate || actualDate || startDate;
   const challengeDay = getChallengeDay(effectiveDate, startDate);
@@ -51,7 +49,7 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({
             {sereja.current_streak} дн.
           </div>
           <div className="text-[11px] font-semibold text-black/70">
-            Серёжа (Макс: {sereja.max_streak})
+            Серёжа{currentUserId === 'sereja' ? ' (вы)' : ''} · макс {sereja.max_streak}
           </div>
         </div>
 
@@ -60,13 +58,13 @@ export const StreakTracker: React.FC<StreakTrackerProps> = ({
             {lera.current_streak} дн.
           </div>
           <div className="text-[11px] font-semibold text-black/70">
-            Лера (Макс: {lera.max_streak})
+            Лера{currentUserId === 'lera' ? ' (вы)' : ''} · макс {lera.max_streak}
           </div>
         </div>
 
         <div>
           <div className="text-base font-black text-black">
-            {Math.round((myUser.current_streak / 30) * 100)}%
+            {Math.round((challengeDay / 30) * 100)}%
           </div>
           <div className="text-[11px] font-semibold text-black/70">
             Пройдено

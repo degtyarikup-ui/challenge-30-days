@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { User, Habit, HabitWithStatus, UserId, Violation } from './types.js';
+import { formatDate } from './dateUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -191,8 +192,7 @@ export function updateStreak(id: UserId, newStreak: number) {
 }
 
 export function resetStreak(id: UserId) {
-  const today = new Date().toISOString().split('T')[0];
-  db.prepare('UPDATE users SET current_streak = 1, challenge_start_date = ? WHERE id = ?').run(today, id);
+  db.prepare('UPDATE users SET current_streak = 0 WHERE id = ?').run(id);
 }
 
 export function getHabitsWithStatus(date: string): { activeHabits: HabitWithStatus[], passiveRules: Habit[] } {
@@ -268,6 +268,90 @@ export function getViolations(date?: string): Violation[] {
   return db.prepare('SELECT * FROM violations ORDER BY id DESC LIMIT 50').all() as Violation[];
 }
 
+export function getActiveHabitsFor(userId: UserId): Habit[] {
+  return db
+    .prepare(
+      `SELECT * FROM habits
+       WHERE category = 'active' AND is_active = 1
+         AND (assigned_to = 'both' OR assigned_to = ?)
+       ORDER BY order_index ASC, id ASC`
+    )
+    .all(userId) as Habit[];
+}
+
+export function countCompletedActive(userId: UserId, date: string): number {
+  return (
+    db
+      .prepare(
+        `SELECT COUNT(*) as c FROM habit_logs l
+         JOIN habits h ON h.id = l.habit_id
+         WHERE l.user_id = ? AND l.date = ? AND l.completed = 1
+           AND h.category = 'active' AND h.is_active = 1
+           AND (h.assigned_to = 'both' OR h.assigned_to = ?)`
+      )
+      .get(userId, date, userId) as { c: number }
+  ).c;
+}
+
+export function isDayCompleteFor(userId: UserId, date: string): boolean {
+  const total = getActiveHabitsFor(userId).length;
+  if (total === 0) return false;
+  return countCompletedActive(userId, date) === total;
+}
+
+/**
+ * Consecutive fully-completed days, computed from the logs rather than read
+ * from a counter. The stored `current_streak` only moved when the 12:00 cron
+ * happened to run, so a server that was asleep at noon reported a stale number
+ * that no longer matched what the client computed from the same data.
+ */
+export function computeStreaks(userId: UserId, actualDate: string): { currentStreak: number; maxStreak: number } {
+  const startDate = getStartDate();
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  const [ay, am, ad] = actualDate.split('-').map(Number);
+  const start = new Date(sy, sm - 1, sd);
+  const today = new Date(ay, am - 1, ad);
+
+  const totalDays = Math.round((today.getTime() - start.getTime()) / 86400000) + 1;
+  if (totalDays <= 0) return { currentStreak: 0, maxStreak: 0 };
+
+  const violationDates = new Set(
+    (db.prepare('SELECT DISTINCT date FROM violations WHERE user_id = ?').all(userId) as Array<{ date: string }>).map(
+      (r) => r.date
+    )
+  );
+
+  let running = 0;
+  let maxStreak = 0;
+  let currentStreak = 0;
+
+  for (let i = 0; i < totalDays; i++) {
+    const day = new Date(start);
+    day.setDate(day.getDate() + i);
+    const dateStr = formatDate(day);
+    const isToday = dateStr === actualDate;
+    const brokenByViolation = violationDates.has(dateStr);
+    const done = !brokenByViolation && isDayCompleteFor(userId, dateStr);
+
+    if (done) {
+      running += 1;
+      if (running > maxStreak) maxStreak = running;
+    } else if (isToday && !brokenByViolation) {
+      // Today is still open — hold, do not break.
+    } else {
+      running = 0;
+    }
+
+    if (isToday) currentStreak = running;
+  }
+
+  return { currentStreak, maxStreak };
+}
+
+export function deleteViolation(id: number) {
+  db.prepare('DELETE FROM violations WHERE id = ?').run(id);
+}
+
 export function getHistoryDays(): Array<{
   date: string;
   serejaCompleted: number;
@@ -277,28 +361,29 @@ export function getHistoryDays(): Array<{
   serejaViolations: number;
   leraViolations: number;
 }> {
-  const activeHabitsCount = (db.prepare("SELECT COUNT(*) as count FROM habits WHERE category = 'active' AND is_active = 1").get() as { count: number }).count;
-  
+  const serejaTotal = getActiveHabitsFor('sereja').length;
+  const leraTotal = getActiveHabitsFor('lera').length;
+
   const datesRows = db.prepare(`
-    SELECT DISTINCT date FROM habit_logs
-    UNION
-    SELECT DISTINCT date FROM violations
+    SELECT date FROM (
+      SELECT DISTINCT date FROM habit_logs
+      UNION
+      SELECT DISTINCT date FROM violations
+    )
     ORDER BY date DESC
     LIMIT 60
   `).all() as Array<{ date: string }>;
 
   return datesRows.map(({ date }) => {
-    const serejaDone = (db.prepare("SELECT COUNT(*) as c FROM habit_logs WHERE date = ? AND user_id = 'sereja' AND completed = 1").get(date) as { c: number }).c;
-    const leraDone = (db.prepare("SELECT COUNT(*) as c FROM habit_logs WHERE date = ? AND user_id = 'lera' AND completed = 1").get(date) as { c: number }).c;
     const serejaV = (db.prepare("SELECT COUNT(*) as c FROM violations WHERE date = ? AND user_id = 'sereja'").get(date) as { c: number }).c;
     const leraV = (db.prepare("SELECT COUNT(*) as c FROM violations WHERE date = ? AND user_id = 'lera'").get(date) as { c: number }).c;
 
     return {
       date,
-      serejaCompleted: serejaDone,
-      serejaTotal: activeHabitsCount,
-      leraCompleted: leraDone,
-      leraTotal: activeHabitsCount,
+      serejaCompleted: countCompletedActive('sereja', date),
+      serejaTotal,
+      leraCompleted: countCompletedActive('lera', date),
+      leraTotal,
       serejaViolations: serejaV,
       leraViolations: leraV,
     };

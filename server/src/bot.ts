@@ -76,7 +76,13 @@ export function initTelegramBot() {
 
 export async function linkTelegramUser(userId: UserId, telegramId: string) {
   try {
-    db.prepare('UPDATE users SET telegram_id = ? WHERE id = ?').run(telegramId, userId);
+    // A Telegram account identifies exactly one profile. Without clearing it
+    // from everyone else, both partners ended up sharing one telegram_id and
+    // /auth then resolved both phones to whichever row it found first.
+    db.transaction(() => {
+      db.prepare('UPDATE users SET telegram_id = NULL WHERE telegram_id = ? AND id != ?').run(telegramId, userId);
+      db.prepare('UPDATE users SET telegram_id = ? WHERE id = ?').run(telegramId, userId);
+    })();
   } catch (err) {
     console.error('Ошибка привязки Telegram ID:', err);
   }

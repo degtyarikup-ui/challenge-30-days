@@ -11,7 +11,9 @@ import {
   getViolations,
   getHistoryDays,
   resetStreak,
-  updateStreak
+  updateStreak,
+  computeStreaks,
+  deleteViolation
 } from './db.js';
 import { getDateInfo } from './dateUtils.js';
 import { sseManager } from './sse.js';
@@ -32,11 +34,20 @@ apiRouter.post('/auth', (req: Request, res: Response) => {
 
   const tgIdStr = telegramId ? telegramId.toString() : null;
 
-  // 1. Check if Telegram ID already mapped in DB
+  // 1. Check if Telegram ID already mapped in DB.
+  // Existing data can have one Telegram id on both profiles; that mapping is
+  // ambiguous, so fall through to explicit selection instead of guessing.
   if (tgIdStr) {
-    const matchedUser = db.prepare('SELECT id FROM users WHERE telegram_id = ?').get(tgIdStr) as { id: UserId } | undefined;
-    if (matchedUser) {
-      return res.json({ userId: matchedUser.id, autoDetected: true });
+    const matched = db.prepare('SELECT id FROM users WHERE telegram_id = ?').all(tgIdStr) as Array<{ id: UserId }>;
+    if (matched.length === 1) {
+      return res.json({ userId: matched[0].id, autoDetected: true });
+    }
+    if (matched.length > 1) {
+      if (manualUserId === 'sereja' || manualUserId === 'lera') {
+        linkTelegramUser(manualUserId, tgIdStr);
+        return res.json({ userId: manualUserId, autoDetected: false });
+      }
+      return res.json({ userId: null, requiresSelection: true, reason: 'ambiguous_telegram_link' });
     }
   }
 
@@ -71,9 +82,20 @@ apiRouter.get('/state', (req: Request, res: Response) => {
   const users = getUsers();
   const startDate = getStartDate();
 
+  for (const id of ['sereja', 'lera'] as UserId[]) {
+    if (!users[id]) continue;
+    const { currentStreak, maxStreak } = computeStreaks(id, dateInfo.actualDate);
+    users[id] = {
+      ...users[id],
+      current_streak: currentStreak,
+      max_streak: Math.max(maxStreak, currentStreak),
+      challenge_start_date: startDate,
+    };
+  }
+
   // Calculate days until start or current day index
-  const todayMs = new Date(dateInfo.actualDate).getTime();
-  const startMs = new Date(startDate).getTime();
+  const todayMs = Date.parse(`${dateInfo.actualDate}T00:00:00Z`);
+  const startMs = Date.parse(`${startDate}T00:00:00Z`);
   const diffDays = Math.round((startMs - todayMs) / (1000 * 60 * 60 * 24));
 
   const { activeHabits, passiveRules } = getHabitsWithStatus(selectedDate);
@@ -260,6 +282,14 @@ apiRouter.delete('/habits/:id', (req: Request, res: Response) => {
   const id = parseInt(req.params.id as string, 10);
   db.prepare('UPDATE habits SET is_active = 0 WHERE id = ?').run(id);
   sseManager.broadcast('state_updated', { type: 'habit_deleted', id });
+  res.json({ success: true });
+});
+
+apiRouter.delete('/violations/:id', (req: Request, res: Response) => {
+  const id = parseInt(req.params.id as string, 10);
+  if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+  deleteViolation(id);
+  sseManager.broadcast('state_updated', { type: 'violation_deleted', id });
   res.json({ success: true });
 });
 

@@ -3,17 +3,22 @@ import { HistoryDay } from '../types';
 import { fetchHistoryApi } from '../api';
 import { Calendar, X, RefreshCw } from 'lucide-react';
 import { triggerHaptic } from '../utils/telegram';
+import { formatDayLabel, getChallengeDay } from '../utils/date';
 
 interface DayHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectDate: (date: string) => void;
+  actualDate: string;
+  startDate: string;
 }
 
 export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
   isOpen,
   onClose,
   onSelectDate,
+  actualDate,
+  startDate,
 }) => {
   const [history, setHistory] = useState<HistoryDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,15 +54,28 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
               История по дням
             </h3>
           </div>
-          <button
-            onClick={() => {
-              triggerHaptic('light');
-              onClose();
-            }}
-            className="w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-black hover:bg-surface-subtle transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                loadHistory();
+              }}
+              disabled={loading}
+              className="w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-black hover:bg-surface-subtle transition disabled:opacity-50"
+              title="Обновить"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              className="w-8 h-8 rounded-full bg-surface-muted flex items-center justify-center text-text-black hover:bg-surface-subtle transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* History list */}
@@ -69,6 +87,30 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
             </div>
           ) : history.length > 0 ? (
             history.map((day) => {
+              const serejaDone = day.serejaTotal > 0 && day.serejaCompleted === day.serejaTotal;
+              const leraDone = day.leraTotal > 0 && day.leraCompleted === day.leraTotal;
+
+              const badge = (
+                name: string,
+                completed: number,
+                total: number,
+                done: boolean,
+                violations: number
+              ) => (
+                <span
+                  className={`px-3 py-1 rounded-full font-bold shadow-xs whitespace-nowrap ${
+                    violations > 0
+                      ? 'bg-danger/10 text-danger'
+                      : done
+                      ? 'bg-lime text-black'
+                      : 'bg-white text-text-black'
+                  }`}
+                >
+                  {name}: {completed}/{total}
+                  {violations > 0 && <span className="ml-1">⚠️</span>}
+                </span>
+              );
+
               return (
                 <div
                   key={day.date}
@@ -79,22 +121,18 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
                   }}
                   className="p-4 bg-surface-muted hover:bg-surface-subtle rounded-2xl flex items-center justify-between gap-3 cursor-pointer transition active:scale-98"
                 >
-                  <div>
-                    <span className="text-sm font-bold text-text-black">{day.date}</span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-text-black truncate">
+                      {formatDayLabel(day.date, actualDate)}
+                    </div>
+                    <div className="text-[11px] font-semibold text-text-muted">
+                      День {getChallengeDay(day.date, startDate)}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-xs">
-                    {/* Sereja status */}
-                    <span className="bg-white text-text-black px-3 py-1 rounded-full font-bold shadow-xs">
-                      Серёжа: {day.serejaCompleted}/{day.serejaTotal}
-                      {day.serejaViolations > 0 && <span className="ml-1 text-danger">⚠️</span>}
-                    </span>
-
-                    {/* Lera status */}
-                    <span className="bg-white text-text-black px-3 py-1 rounded-full font-bold shadow-xs">
-                      Лера: {day.leraCompleted}/{day.leraTotal}
-                      {day.leraViolations > 0 && <span className="ml-1 text-danger">⚠️</span>}
-                    </span>
+                  <div className="flex items-center gap-2 text-xs flex-shrink-0">
+                    {badge('Серёжа', day.serejaCompleted, day.serejaTotal, serejaDone, day.serejaViolations)}
+                    {badge('Лера', day.leraCompleted, day.leraTotal, leraDone, day.leraViolations)}
                   </div>
                 </div>
               );
@@ -102,6 +140,7 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
           ) : (
             <div className="py-8 text-center text-text-muted space-y-1">
               <p className="text-xs font-semibold">История пока пуста.</p>
+              <p className="text-[11px] font-medium">Отметьте первую привычку — день появится здесь.</p>
             </div>
           )}
         </div>
